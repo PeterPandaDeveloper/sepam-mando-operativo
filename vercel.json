@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "http://150.136.238.32/api/$1"
+      "destination": "http://150.136.238.32/sepam-api/$1"
     },
     {
       "source": "/(.*)",
