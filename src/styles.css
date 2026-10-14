@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Paleta Médica Beige + Verde Bosque (Inspirada en el reporte clínico) */
+    --bg-main: #f5f4ed;
+    --bg-card: #ffffff;
+    --bg-card-secondary: #edece4;
+    --border-color: #d2dfd8;
+    --brand-dark-green: #07483b;
+    --brand-forest: #0b5948;
+    --brand-sage: #52796f;
+    --brand-mint: #2d6a4f;
+    --text-primary: #0d2822;
+    --text-secondary: #405c54;
+    --text-muted: #648279;
+    --brand-gold: #d97706;
+  }
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f5f4ed;
+  color: #0d2822;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbars clínicas */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f5f4ed;
+}
+::-webkit-scrollbar-thumb {
+  background: #c3d4cd;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ab4a9;
+}

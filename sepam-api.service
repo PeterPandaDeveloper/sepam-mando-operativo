@@ -1,0 +1,13 @@
+[Unit]
+Description=SEPAM Mando Operativo FastAPI Backend (DuckDB + SQLite)
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/sepam-backend
+ExecStart=/home/ubuntu/sepam-backend/venv/bin/python main.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

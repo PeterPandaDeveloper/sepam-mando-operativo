@@ -1,0 +1,98 @@
+<div 
+  class="min-h-screen flex flex-col font-sans transition-colors duration-200"
+  [style.backgroundColor]="'var(--bg-main, #f5f4ed)'"
+  [style.color]="'var(--text-primary, #0d2822)'"
+>
+  
+  <!-- Encabezado Institucional en Verde Bosque (#07483b) -->
+  <app-header></app-header>
+
+  <!-- Menú Flotante Lateral Izquierdo (Modo WordPress / GUI Editor para Super Usuarios) -->
+  <app-customizer-sidebar></app-customizer-sidebar>
+
+  <!-- Área de Contenido Principal -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
+    
+    @switch (vistaActiva()) {
+      @case ('dashboard') {
+        <app-dashboard></app-dashboard>
+      }
+      @case ('movil') {
+        <app-paramedic-mobile></app-paramedic-mobile>
+      }
+      @case ('acv') {
+        <app-medical-acv></app-medical-acv>
+      }
+      @case ('ambulancia') {
+        <app-ambulance></app-ambulance>
+      }
+      @case ('admin') {
+        <app-admin-panel></app-admin-panel>
+      }
+    }
+
+  </main>
+
+  <!-- Pie Institucional SEPAM -->
+  <footer 
+    class="border-t py-3 px-4 text-center text-xs shadow-inner transition-all duration-300"
+    [style.backgroundColor]="customizer.config().tema.colorHeader"
+    [style.borderColor]="customizer.config().tema.colorBorde"
+    [style.color]="customizer.config().tema.colorHeaderTexto"
+  >
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <img src="logo-sepam.png" alt="SEPAM" class="w-6 h-6 rounded-full object-contain bg-black border border-[#f59e0b] shadow-sm"/>
+        <span class="font-bold">SEPAM</span>
+        <span class="opacity-90">• Servicios Prehospitalarios y Ambulancias Ecuador</span>
+      </div>
+      <div class="flex items-center gap-3 font-mono text-[11px] opacity-90">
+        <span>Sistema de Mando & Control Operativo</span>
+        <span class="opacity-40">|</span>
+        <span class="text-[#fde68a] font-bold">Versión 3.0-Multi-Rol</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast / Notificación Táctica en Tiempo Real -->
+  @if (emergency.notificacionActiva()) {
+    <div class="fixed bottom-6 right-6 z-50 animate-bounce">
+      <div 
+        class="flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border text-xs font-bold backdrop-blur-md"
+        [ngClass]="{
+          'bg-emerald-800 text-white border-emerald-600': emergency.notificacionActiva()?.tipo === 'exito',
+          'bg-amber-600 text-white border-amber-500': emergency.notificacionActiva()?.tipo === 'alerta',
+          'bg-[#07483b] text-white border-[#05372d]': emergency.notificacionActiva()?.tipo === 'info'
+        }"
+      >
+        <span class="w-2.5 h-2.5 rounded-full" [ngClass]="{
+          'bg-emerald-300': emergency.notificacionActiva()?.tipo === 'exito',
+          'bg-amber-200 animate-ping': emergency.notificacionActiva()?.tipo === 'alerta',
+          'bg-cyan-300': emergency.notificacionActiva()?.tipo === 'info'
+        }"></span>
+        <span>{{ emergency.notificacionActiva()?.mensaje }}</span>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Supabase -->
+  @if (mostrarModalSupabase()) {
+    <app-supabase-modal></app-supabase-modal>
+  }
+
+  <!-- Modal Generación de Reporte Oficial -->
+  @if (mostrarModalReporte()) {
+    <app-report-modal></app-report-modal>
+  }
+
+  <!-- Modal de Inicio de Sesión / Cambio de Usuario -->
+  @if (mostrarModalLogin()) {
+    <app-login-modal></app-login-modal>
+  }
+
+  <!-- Modal de Configuración de Red & Códigos QR Plug & Play -->
+  @if (mostrarModalRed()) {
+    <app-network-modal></app-network-modal>
+  }
+
+</div>
