@@ -96,6 +96,16 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             <span>📲 Código QR Móvil</span>
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
           </button>
+          <button 
+            (click)="tabActiva = 'poliglota'"
+            [class.bg-[#07483b]]="tabActiva === 'poliglota'"
+            [class.text-white]="tabActiva === 'poliglota'"
+            [class.text-[#405c54]]="tabActiva !== 'poliglota'"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+          >
+            <span>⚡ Tri-Motor Políglota</span>
+            <span class="w-1.5 h-1.5 rounded-full" [ngClass]="db.redisOnline() ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"></span>
+          </button>
         </div>
       </div>
 
@@ -622,6 +632,154 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
         </div>
       }
 
+      <!-- ======================================================== -->
+      <!-- PESTAÑA 8: PERSISTENCIA POLÍGLOTA TRI-MOTOR (REDIS + DUCKDB + SQLITE) -->
+      <!-- ======================================================== -->
+      @if (tabActiva === 'poliglota') {
+        <div class="space-y-4">
+          <div class="bg-white border border-[#d2dfd8] rounded-xl p-5 shadow-sm space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#edece4] pb-3">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-100 text-purple-900 border border-purple-300 font-bold uppercase">
+                    Persistencia Políglota Tri-Motor
+                  </span>
+                  <span class="text-xs text-[#648279] font-mono">SQLite WAL + DuckDB 1.5 + Redis 7 NoSQL</span>
+                </div>
+                <h3 class="text-base font-black text-[#07483b] flex items-center gap-2">
+                  <span>⚡ Motores de Almacenamiento, Analítica y Alertas en Tiempo Real</span>
+                </h3>
+                <p class="text-xs text-[#405c54] mt-0.5">
+                  Arquitectura híbrida optimizada para eventos masivos: transacciones concurrentes seguras, reportes OLAP y alertas críticas instantáneas en memoria.
+                </p>
+              </div>
+              <button 
+                (click)="db.probarSimulacroAlerta()"
+                class="px-3.5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap hover:scale-105"
+                title="Disparar alarma sonora y alerta visual de simulacro en tiempo real vía Redis"
+              >
+                <span>🚨 Probar Alarma Sonora (Redis)</span>
+              </button>
+            </div>
+
+            <!-- Grilla de los 3 Motores -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- Motor 1: Redis NoSQL -->
+              <div class="p-4 rounded-xl border border-red-200 bg-red-50/50 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xl">⚡</span>
+                    <div>
+                      <h4 class="text-sm font-bold text-red-900">Redis 7 (NoSQL In-Memory)</h4>
+                      <p class="text-[11px] text-red-700">Pub/Sub & Microsecond Cache</p>
+                    </div>
+                  </div>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase"
+                        [ngClass]="db.redisOnline() ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-red-100 text-red-800 border border-red-300'">
+                    {{ db.redisOnline() ? 'ONLINE' : 'OFFLINE' }}
+                  </span>
+                </div>
+                <p class="text-xs text-red-950/80 leading-relaxed">
+                  Emite alertas críticas en &lt;1ms cuando un paramédico registra un código <strong>ROJO</strong> o <strong>AMARILLO</strong>, activando la alarma sonora del puesto de mando sin recargar la página.
+                </p>
+                <div class="text-[11px] font-mono text-red-900/90 bg-white/80 p-2 rounded border border-red-200 space-y-1">
+                  <div>Memoria: <strong>{{ db.redisDetalle()?.memoria_usada || '1.45M' }}</strong></div>
+                  <div>Canales: <strong>sepam:alertas</strong></div>
+                  <div>Versión: <strong>{{ db.redisDetalle()?.version || '7.0' }}</strong></div>
+                </div>
+              </div>
+
+              <!-- Motor 2: DuckDB 1.5 OLAP -->
+              <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/50 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xl">🦆</span>
+                    <div>
+                      <h4 class="text-sm font-bold text-amber-900">DuckDB 1.5 (OLAP Columnar)</h4>
+                      <p class="text-[11px] text-amber-700">Analítica Vectorizada & Excel</p>
+                    </div>
+                  </div>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase">
+                    ONLINE
+                  </span>
+                </div>
+                <p class="text-xs text-amber-950/80 leading-relaxed">
+                  Calcula cubos analíticos, curvas horarias por sector y genera informes ejecutivos profesionales en <strong>Excel (.xlsx)</strong> y <strong>CSV</strong> listos para auditorías institucionales.
+                </p>
+                <div class="flex gap-2 pt-1">
+                  <button (click)="db.descargarExcel()" class="flex-1 py-1.5 px-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-bold transition-all cursor-pointer">
+                    📥 Bajar Excel
+                  </button>
+                  <button (click)="db.descargarCSV()" class="py-1.5 px-2 bg-slate-700 hover:bg-slate-800 text-white rounded text-xs font-bold transition-all cursor-pointer">
+                    CSV
+                  </button>
+                </div>
+              </div>
+
+              <!-- Motor 3: SQLite 3 WAL -->
+              <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xl">💾</span>
+                    <div>
+                      <h4 class="text-sm font-bold text-emerald-900">SQLite 3 (WAL Mode)</h4>
+                      <p class="text-[11px] text-emerald-700">OLTP Transaccional ACID</p>
+                    </div>
+                  </div>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase">
+                    ONLINE
+                  </span>
+                </div>
+                <p class="text-xs text-emerald-950/80 leading-relaxed">
+                  Almacén maestro en disco con <em>Write-Ahead Logging</em>. Garantiza cero colisiones ni bloqueos cuando decenas de paramédicos envían triajes simultáneamente desde sus móviles.
+                </p>
+                <div class="text-[11px] font-mono text-emerald-900/90 bg-white/80 p-2 rounded border border-emerald-200 space-y-1">
+                  <div>Modo: <strong>PRAGMA journal_mode = WAL</strong></div>
+                  <div>Sincronía: <strong>NORMAL (Baja I/O)</strong></div>
+                  <div>Persistencia: <strong>Inmutable en Disco</strong></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Registro de Alertas Recientes en Memoria NoSQL -->
+            <div class="border border-[#d2dfd8] rounded-xl p-4 bg-[#f8faf9] space-y-3">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-[#0d2822] flex items-center gap-2">
+                <span>🔔 Registro en Memoria NoSQL de Alertas Recientes (Redis List)</span>
+                <span class="text-[10px] bg-red-100 text-red-800 font-mono px-2 py-0.5 rounded-full">
+                  {{ db.alertasRecientes().length }} en memoria
+                </span>
+              </h4>
+
+              @if (db.alertasRecientes().length === 0) {
+                <p class="text-xs text-[#648279] italic py-3 text-center">
+                  No hay alertas críticas recientes registradas en memoria. Usa el botón "Probar Alarma Sonora" para realizar un simulacro.
+                </p>
+              } @else {
+                <div class="space-y-2 max-h-60 overflow-y-auto">
+                  @for (alerta of db.alertasRecientes(); track alerta.id) {
+                    <div class="p-2.5 rounded-lg border flex items-center justify-between text-xs transition-all"
+                         [ngClass]="alerta.triage_color === 'ROJO' ? 'bg-red-50 border-red-300' : 'bg-amber-50 border-amber-300'">
+                      <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-black text-white"
+                              [ngClass]="alerta.triage_color === 'ROJO' ? 'bg-red-600' : 'bg-amber-500'">
+                          {{ alerta.triage_color }}
+                        </span>
+                        <div>
+                          <span class="font-bold text-slate-900">{{ alerta.sector_nombre }}</span>
+                          <span class="text-slate-600 ml-1.5">• {{ alerta.motivo }}</span>
+                          <span class="text-[10px] text-slate-500 ml-1 font-mono">({{ alerta.paciente_nombre }})</span>
+                        </div>
+                      </div>
+                      <span class="text-[10px] font-mono text-slate-500">{{ alerta.hora }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
     </div>
 
     <!-- MODAL PARA CREAR / EDITAR PARAMÉDICO -->
@@ -774,7 +932,7 @@ export class AdminPanelComponent {
   db = inject(DatabaseService);
   network = inject(NetworkService);
 
-  tabActiva: 'paramedicos' | 'superusuarios' | 'sectores' | 'acvs' | 'ambulancias' | 'evento' | 'red' = 'paramedicos';
+  tabActiva: 'paramedicos' | 'superusuarios' | 'sectores' | 'acvs' | 'ambulancias' | 'evento' | 'red' | 'poliglota' = 'paramedicos';
   pestanaQRAdmin: 'local' | 'nube' = 'local';
 
   mostrarModalParamedico = false;

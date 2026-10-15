@@ -11,17 +11,18 @@ from typing import Optional, Dict, Any, List
 from database import get_connection, init_db, DB_PATH
 import analytics
 import network_manager
+from redis_service import redis_service
 
 # Inicializar Base de Datos SQLite al arrancar
 init_db()
 
 app = FastAPI(
     title="SEPAM - Backend de Mando Operativo",
-    description="API REST Ligera de Campo con persistencia SQLite (WAL) y analítica columnar con DuckDB",
-    version="1.0.0"
+    description="Arquitectura Políglota de Campo: SQLite 3 (WAL) + DuckDB 1.5 OLAP + Redis 7 NoSQL In-Memory",
+    version="2.0.0"
 )
 
-# Habilitar CORS total para permitir conexiones desde localhost, red LAN y Oracle Cloud
+# Habilitar CORS total para permitir conexiones desde Vercel HTTPS, red LAN y localhost
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -78,8 +79,12 @@ def raiz():
         return RedirectResponse(url="/sepam/")
     return {
         "sistema": "SEPAM - Mando Operativo",
-        "motor_transaccional": "SQLite 3 (WAL mode)",
-        "motor_analitico": "DuckDB 1.5",
+        "arquitectura": "Persistencia Políglota Tri-Motor",
+        "motores": {
+            "oltp_transaccional": "SQLite 3 (WAL mode)",
+            "olap_analitico": "DuckDB 1.5 (Vectorizado)",
+            "nosql_tiempo_real": "Redis 7 (In-Memory Pub/Sub & Cache)"
+        },
         "estado": "OPERACIONAL"
     }
 
@@ -96,13 +101,52 @@ def estado():
     evento_nombre = evento_row[0] if evento_row else "Sin evento"
     conn.close()
 
+    redis_info = redis_service.get_info()
+
     return {
         "status": "ONLINE",
         "evento_activo": evento_nombre,
         "total_atenciones": total_atenciones,
         "total_logs": total_logs,
-        "archivo_db": DB_PATH
+        "archivo_db": DB_PATH,
+        "motores": {
+            "oltp": "SQLite 3 (WAL)",
+            "olap": "DuckDB 1.5",
+            "nosql": f"Redis 7 ({redis_info.get('estado', 'OFFLINE')})"
+        },
+        "redis": redis_info
     }
+
+# --- ENDPOINTS REDIS NOSQL (ALERTAS Y ESTADO) ---
+
+@app.get("/api/redis/estado")
+def estado_redis():
+    """Retorna telemetria y estado del motor NoSQL Redis"""
+    return redis_service.get_info()
+
+@app.get("/api/alertas/recientes")
+def alertas_recientes(limite: int = 10):
+    """Devuelve las alertas criticas y de ambulancia en memoria desde Redis"""
+    return redis_service.obtener_alertas_recientes(limite=limite)
+
+@app.post("/api/alertas/test")
+def disparar_alerta_prueba():
+    """Dispara una alerta de prueba en el canal de Redis para simulacros"""
+    alerta_prueba = {
+        "id": f"sim-{int(os.times().elapsed * 1000)}",
+        "codigo": "SIM-01",
+        "triage_color": "ROJO",
+        "sector_nombre": "ZONA C - ESCENARIO Y FOSO",
+        "paciente_nombre": "PACIENTE DE SIMULACRO",
+        "motivo": "Simulacro de paro / asfixia por aglomeración",
+        "derivacion": "AMBULANCIA",
+        "hora": "EN VIVO",
+        "tipo_alerta": "CRITICA"
+    }
+    enviado = redis_service.publicar_alerta(alerta_prueba)
+    return {"mensaje": "Alerta de prueba emitida en Redis", "exito": enviado, "alerta": alerta_prueba}
+
+# --- GESTIÓN DE EVENTOS ---
 
 @app.get("/api/evento")
 def obtener_evento():
@@ -127,7 +171,10 @@ def actualizar_evento(data: EventoUpdate):
     """, (data.nombre, data.tipo, data.ciudad, data.lugar, data.fecha, data.horario, data.riesgo, data.aforo_estimado))
     conn.commit()
     conn.close()
+    redis_service.invalidar_cache()
     return {"mensaje": "Evento actualizado exitosamente"}
+
+# --- GESTIÓN TRANSACCIONAL DE ATENCIONES ---
 
 @app.get("/api/atenciones")
 def listar_atenciones():
@@ -156,6 +203,7 @@ def guardar_atencion(item: AtencionCreate):
     atencion_id = item.id or f"at-{int(os.times().elapsed * 1000)}"
     detalles_str = json.dumps(item.detalles or {})
 
+    # 1. Guardar de forma transaccional en SQLite (WAL)
     c.execute("""
         INSERT OR REPLACE INTO atenciones (
             id, codigo, timestamp, fecha, sector_id, sector_nombre,
@@ -170,7 +218,7 @@ def guardar_atencion(item: AtencionCreate):
         item.hospital, detalles_str
     ))
 
-    # Registrar automáticamente en bitácora de auditoría
+    # 2. Registrar en bitácora de auditoría
     log_id = f"log-{int(os.times().elapsed * 1000)}"
     c.execute("""
         INSERT INTO logs_auditoria (id, timestamp, fecha, usuario, nombre_usuario, rol, accion, detalles, dispositivo)
@@ -184,6 +232,25 @@ def guardar_atencion(item: AtencionCreate):
 
     conn.commit()
     conn.close()
+
+    # 3. Invalidar la caché de métricas en Redis
+    redis_service.invalidar_cache()
+
+    # 4. Publicar Alerta NoSQL en tiempo real vía Redis si es ROJO, AMARILLO o Traslado de Ambulancia
+    if item.triage_color in ["ROJO", "AMARILLO"] or item.derivacion == "AMBULANCIA":
+        alerta = {
+            "id": atencion_id,
+            "codigo": item.codigo,
+            "triage_color": item.triage_color,
+            "sector_nombre": item.sector_nombre or "General",
+            "paciente_nombre": item.paciente_nombre or "No identificado",
+            "motivo": item.motivo or "Sin motivo",
+            "derivacion": item.derivacion or "ALTA",
+            "hora": item.timestamp,
+            "tipo_alerta": "CRITICA" if item.triage_color == "ROJO" else "URGENTE"
+        }
+        redis_service.publicar_alerta(alerta)
+
     return {"mensaje": "Atención guardada exitosamente", "id": atencion_id}
 
 @app.get("/api/logs")
@@ -211,13 +278,24 @@ def registrar_log(item: LogCreate):
     conn.close()
     return {"mensaje": "Log registrado exitosamente", "id": log_id}
 
-# --- ENDPOINTS ANALÍTICOS POTENCIADOS CON DUCKDB ---
+# --- ENDPOINTS ANALÍTICOS POTENCIADOS CON DUCKDB Y REDIS CACHE ---
 
 @app.get("/api/analitica/resumen")
 def analitica_resumen():
-    """Ejecuta consultas columnares con DuckDB sobre sepam.db"""
+    """Ejecuta consultas columnares con DuckDB aceleradas con caché en memoria Redis"""
+    # 1. Intentar responder desde Redis Cache (<1ms)
+    cached = redis_service.get_cache_metricas()
+    if cached:
+        cached["fuente"] = "REDIS_CACHE"
+        return cached
+
+    # 2. Si no hay cache, computar con motor analítico columnar DuckDB 1.5
     try:
-        return analytics.obtener_resumen_operativo()
+        resultado = analytics.obtener_resumen_operativo()
+        resultado["fuente"] = "DUCKDB_COMPUTED"
+        # Guardar en Redis cache por 5 segundos
+        redis_service.set_cache_metricas(resultado, ttl_segundos=5)
+        return resultado
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error en motor DuckDB: {str(e)}")
 
@@ -270,11 +348,10 @@ def descargar_reporte_csv():
         media_type="text/csv"
     )
 
-# --- ENDPOINTS DE GESTIÓN DE RED Y QR PLUG & PLAY ---
+# --- ENDPOINTS DE GESTIÓN DE RED Y QR ---
 
 @app.get("/api/red/diagnostico")
 def obtener_diagnostico_red():
-    """Analiza automáticamente el estado de red, Hotspot, Ethernet, Wi-Fi y genera QRs"""
     try:
         return network_manager.diagnostico_red_completo()
     except Exception as e:
@@ -282,18 +359,17 @@ def obtener_diagnostico_red():
 
 @app.get("/api/red/qr")
 def obtener_qr(tipo: str = "local"):
-    """Devuelve código QR en Base64 para acceso rápido móvil"""
     diag = network_manager.diagnostico_red_completo()
     if tipo == "nube":
         return {"url": diag["url_nube_brigadistas"], "qr_base64": diag["qr_nube_base64"], "tipo": "nube"}
     else:
         return {"url": diag["url_local_brigadistas"], "qr_base64": diag["qr_local_base64"], "tipo": "local"}
 
-# --- SERVIR APLICACIÓN WEB ANGULAR COMPILADA ---
+# --- SERVIR APLICACIÓN WEB ANGULAR COMPILADA SI EXISTE LOCALMENTE ---
 dist_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dist", "sepam-mando-operativo", "browser")
 if os.path.exists(dist_path):
     app.mount("/sepam", StaticFiles(directory=dist_path, html=True), name="sepam")
 
 if __name__ == "__main__":
-    print("Iniciando SEPAM Backend con SQLite WAL + DuckDB + Network Manager en puerto 8000...")
+    print("Iniciando SEPAM Backend: SQLite WAL + DuckDB 1.5 + Redis 7 en puerto 8000...")
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)

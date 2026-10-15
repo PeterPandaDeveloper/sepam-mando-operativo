@@ -4,12 +4,38 @@ import { EmergencyService } from '../../services/emergency.service';
 import { CustomizerService } from '../../services/customizer.service';
 import { SupabaseService } from '../../services/supabase.service';
 import { NetworkService } from '../../services/network.service';
+import { DatabaseService } from '../../services/database.service';
 
 @Component({
   selector: 'app-header',
   standalone: true,
   imports: [CommonModule],
   template: `
+    <!-- Banner de Alerta Crítica en Tiempo Real (Redis NoSQL) -->
+    @if (db.alertaActiva()) {
+      <div class="bg-red-600 text-white px-4 py-2 flex items-center justify-between text-xs font-bold animate-pulse shadow-xl border-b-2 border-red-300 select-none z-50">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-base">🚨</span>
+          <span class="bg-white text-red-800 px-2 py-0.5 rounded font-black text-[10px] tracking-wider uppercase">
+            ALERTA {{ db.alertaActiva()?.tipo_alerta }} (REDIS)
+          </span>
+          <span class="bg-black/30 px-2 py-0.5 rounded font-black text-[11px]">
+            Triage {{ db.alertaActiva()?.triage_color }}
+          </span>
+          <span class="font-bold underline text-amber-200">{{ db.alertaActiva()?.sector_nombre }}</span>
+          <span class="opacity-95">• Motivo: {{ db.alertaActiva()?.motivo }}</span>
+          <span class="opacity-80 font-mono text-[11px]">({{ db.alertaActiva()?.paciente_nombre }} - {{ db.alertaActiva()?.hora }})</span>
+        </div>
+        <button 
+          (click)="db.cerrarAlertaActiva()" 
+          class="bg-black/40 hover:bg-black/60 text-white px-2.5 py-1 rounded text-xs font-bold cursor-pointer transition-all ml-2 whitespace-nowrap"
+          title="Descartar banner de alerta activa"
+        >
+          Entendido ✕
+        </button>
+      </div>
+    }
+
     <header 
       class="border-b px-4 py-3 select-none shadow-md transition-all duration-300"
       [style.backgroundColor]="customizer.config().tema.colorHeader"
@@ -256,6 +282,13 @@ import { NetworkService } from '../../services/network.service';
             </button>
           }
 
+          <!-- Indicador Tri-Motor Políglota (Redis + DuckDB + SQLite) -->
+          <div class="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#05372d] border border-emerald-400/40 text-white text-[10px] font-bold"
+               title="Persistencia Políglota: SQLite WAL (Transaccional) + DuckDB 1.5 (Analítico) + Redis 7 (Alertas NoSQL)">
+            <span class="w-2 h-2 rounded-full" [ngClass]="db.redisOnline() ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"></span>
+            <span class="font-mono text-emerald-200">REDIS + DUCKDB + SQLITE</span>
+          </div>
+
           <!-- Conexión Supabase / LAN -->
           <button 
             (click)="abrirModalSupabase()"
@@ -276,6 +309,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   customizer = inject(CustomizerService);
   supabase = inject(SupabaseService);
   network = inject(NetworkService);
+  db = inject(DatabaseService);
 
   vistaActual = signal<'dashboard' | 'movil' | 'acv' | 'ambulancia' | 'admin'>('dashboard');
   horaActual = '';

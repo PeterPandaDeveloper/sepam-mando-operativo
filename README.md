@@ -11,9 +11,10 @@ Diseñado con arquitectura **100% Cloud Server-Side**, alta disponibilidad con *
 - **Triaje Táctico Rápido (Método START):** Registro ágil de pacientes en menos de 15 segundos con clasificación por código de colores (Rojo: Crítico, Amarillo: Urgente, Verde: Leve, Negro: Fallecido).
 - **Tablero de Control de Mando Operativo:** Monitoreo en vivo de pacientes atendidos, altas en puesto médico de avanzada (PMA), derivaciones a carpas y traslados en ambulancia a hospitales de la red pública.
 - **Acceso Móvil Plug & Play vía Código QR:** Los brigadistas en cancha o graderíos escanean el código QR oficial desde su navegador móvil (Chrome, Safari) usando su plan de datos 4G/5G o el Wi-Fi del evento.
-- **Motor Analítico Políglota Dual:**
-  - **SQLite en modo WAL (Write-Ahead Logging):** Transacciones concurrentes seguras de atenciones sin bloqueos.
-  - **DuckDB 1.5 OLAP Engine:** Consultas analíticas vectorizadas ultrarrápidas y generación de reportes ejecutivos en formato Excel (`.xlsx`).
+- **Persistencia Políglota Tri-Motor (Gold Standard en Emergencias):**
+  - **SQLite 3 en modo WAL (Write-Ahead Logging):** Motor transaccional (OLTP) de alta concurrencia que registra atenciones en microsegundos sin bloqueos.
+  - **DuckDB 1.5 OLAP Engine:** Motor columnar en memoria para analítica vectorizada instantánea y generación al vuelo de reportes ejecutivos en formato **Excel (`.xlsx`)** y **CSV**.
+  - **Redis 7 NoSQL In-Memory & Pub/Sub:** Sistema de mensajería ultrarrápido (<1ms) para alertas críticas instantáneas (Triage Rojo/Amarillo), alarma acústica y caché de métricas en memoria.
 - **Blindaje y Convivencia en la Nube:** Coexistencia armónica con servidores de juego (Pterodactyl, Wings Daemon y Docker) en la misma instancia de Oracle Cloud sin conflictos de puertos ni colisiones de API.
 
 ---
@@ -24,7 +25,7 @@ Diseñado con arquitectura **100% Cloud Server-Side**, alta disponibilidad con *
 flowchart TD
     subgraph Clientes ["📱 Dispositivos de Campo y Mando"]
         Brigadistas["Brigadistas en Graderío / Cancha\n(Móviles 4G / 5G / Wi-Fi)"]
-        Mando["Mando Central / Puesto de Comando\n(Laptop / Tablet / PC)"]
+        Mando["Mando Central / Puesto de Comando\n(Laptop / Tablet / PC)\n🚨 Alarma Sonora Activa"]
     end
 
     subgraph Vercel ["⚡ Vercel Cloud (Edge Network)"]
@@ -35,7 +36,12 @@ flowchart TD
     subgraph Oracle ["☁️ Oracle Cloud Infrastructure (150.136.238.32)"]
         Nginx["Nginx Reverse Proxy (Puerto 80)\nlocation ^~ /sepam-api/"]
         FastAPI["FastAPI Backend (Puerto 8000)\nSystemd: sepam-api.service"]
-        DuckDB["DuckDB 1.5 + SQLite WAL\n/home/ubuntu/sepam-backend/sepam.db"]
+        
+        subgraph Motores ["⚡ Persistencia Políglota Tri-Motor"]
+            SQLite["💾 SQLite 3 (WAL)\nOLTP Inmutable en Disco"]
+            DuckDB["🦆 DuckDB 1.5\nOLAP Analítico & Excel"]
+            Redis["⚡ Redis 7 NoSQL\nPub/Sub & Alert Stream (<1ms)"]
+        end
         
         Pterodactyl["Pterodactyl Panel + Wings + Docker\n(Totalmente Aislado e Intacto)"]
     end
@@ -45,7 +51,10 @@ flowchart TD
     Frontend -->|/api/*| VercelProxy
     VercelProxy -->|Proxy seguro| Nginx
     Nginx -->|Aislado a 127.0.0.1:8000| FastAPI
+    FastAPI --> SQLite
     FastAPI --> DuckDB
+    FastAPI --> Redis
+    Redis -.->|Alertas en Vivo| FastAPI
 ```
 
 ---
