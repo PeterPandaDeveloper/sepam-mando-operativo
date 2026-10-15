@@ -187,7 +187,7 @@ export interface EventoOperativo {
   lugar: string;
   fecha: string;
   horario: string;
-  riesgo: 'Bajo' | 'Medio' | 'Alto';
+  riesgo: 'Bajo' | 'Medio' | 'Alto' | 'Extremo';
   aforoEstimado: number;
 }
 

@@ -143,7 +143,7 @@ def generar_reporte_excel(ruta_destino: str):
             SELECT 
                 triage_color as 'CLASIFICACIÓN TRIAGE',
                 COUNT(*) as 'TOTAL PACIENTES',
-                ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM sepam.atenciones), 1) || '%' as 'PORCENTAJE'
+                COALESCE(ROUND(COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM sepam.atenciones), 0), 1), 0.0) || '%' as 'PORCENTAJE'
             FROM sepam.atenciones
             GROUP BY triage_color
             ORDER BY COUNT(*) DESC;
