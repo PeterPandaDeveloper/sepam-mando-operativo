@@ -137,5 +137,57 @@ class RedisService:
             except Exception:
                 pass
 
+    def guardar_clave_acceso(self, clave: str, datos: Dict[str, Any], ttl_segundos: int = 7200) -> bool:
+        """
+        Guarda una clave de acceso temporal en Redis con TTL estricto (por defecto 2 horas = 7200s).
+        """
+        if not self.is_online():
+            return False
+        try:
+            self.client.setex(f"sepam:auth:key:{clave}", ttl_segundos, json.dumps(datos))
+            return True
+        except Exception as e:
+            logger.error("Error al guardar clave en Redis: %s", e)
+            return False
+
+    def obtener_clave_acceso(self, clave: str) -> Optional[Dict[str, Any]]:
+        """
+        Obtiene los datos de la clave de acceso si sigue viva en Redis.
+        """
+        if not self.is_online():
+            return None
+        try:
+            val = self.client.get(f"sepam:auth:key:{clave}")
+            if val:
+                return json.loads(val)
+            return None
+        except Exception as e:
+            logger.error("Error al obtener clave de Redis: %s", e)
+            return None
+
+    def obtener_ttl_clave(self, clave: str) -> int:
+        """
+        Devuelve los segundos restantes de vida de la clave en Redis (-2 si no existe).
+        """
+        if not self.is_online():
+            return -2
+        try:
+            return self.client.ttl(f"sepam:auth:key:{clave}")
+        except Exception:
+            return -2
+
+    def revocar_clave_acceso(self, clave: str) -> bool:
+        """
+        Elimina la clave de acceso inmediatamente de Redis.
+        """
+        if not self.is_online():
+            return False
+        try:
+            self.client.delete(f"sepam:auth:key:{clave}")
+            return True
+        except Exception:
+            return False
+
 # Instancia singleton para la aplicacion
 redis_service = RedisService()
+

@@ -11,7 +11,11 @@
   <app-customizer-sidebar></app-customizer-sidebar>
 
   <!-- Área de Contenido Principal -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
+  <main 
+    class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 transition-all duration-300"
+    [class.blur-md]="!auth.accesoAutorizado()"
+    [class.pointer-events-none]="!auth.accesoAutorizado()"
+  >
     
     @switch (vistaActiva()) {
       @case ('dashboard') {
@@ -93,6 +97,11 @@
   <!-- Modal de Configuración de Red & Códigos QR Plug & Play -->
   @if (mostrarModalRed()) {
     <app-network-modal></app-network-modal>
+  }
+
+  <!-- Gatekeeper de Seguridad: Clave de Acceso Temporal (2 Horas vía Telegram) -->
+  @if (!auth.accesoAutorizado()) {
+    <app-access-guard-modal></app-access-guard-modal>
   }
 
 </div>

@@ -70,6 +70,19 @@ def init_db():
     );
     """)
 
+    # 4. Tabla de Claves de Acceso Temporal (Protección Telegram 2 Horas)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS claves_acceso (
+        id TEXT PRIMARY KEY,
+        clave TEXT UNIQUE NOT NULL,
+        creada_en TEXT NOT NULL,
+        expira_en TEXT NOT NULL,
+        duracion_segundos INTEGER NOT NULL,
+        generada_por TEXT NOT NULL,
+        estado TEXT NOT NULL DEFAULT 'ACTIVA'
+    );
+    """)
+
     # Poblar con datos iniciales si la tabla de eventos está vacía
     cursor.execute("SELECT COUNT(*) FROM evento;")
     if cursor.fetchone()[0] == 0:

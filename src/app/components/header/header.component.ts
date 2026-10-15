@@ -5,6 +5,7 @@ import { CustomizerService } from '../../services/customizer.service';
 import { SupabaseService } from '../../services/supabase.service';
 import { NetworkService } from '../../services/network.service';
 import { DatabaseService } from '../../services/database.service';
+import { AccessAuthService } from '../../services/access-auth.service';
 
 @Component({
   selector: 'app-header',
@@ -282,6 +283,32 @@ import { DatabaseService } from '../../services/database.service';
             </button>
           }
 
+          <!-- Indicador de Sesión Temporal de 2 Horas (Protección Telegram) -->
+          @if (auth.accesoAutorizado()) {
+            <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#05372d] border border-amber-400/50 text-white text-[11px] font-mono shadow-xs"
+                 title="Acceso de 2 horas activo. Clave verificada en Redis/Telegram.">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="text-amber-400 font-sans text-[10px] font-black uppercase">PMU 2H:</span>
+              <span class="font-bold text-amber-200">{{ auth.tiempoRestanteFormateado() }}</span>
+              <button 
+                (click)="auth.cerrarSesionAcceso()"
+                class="ml-1 text-[10px] text-red-300 hover:text-red-100 font-sans cursor-pointer hover:underline"
+                title="Bloquear pantalla del Centro de Mando"
+              >
+                🔒
+              </button>
+            </div>
+          } @else {
+            <button 
+              (click)="auth.cerrarSesionAcceso()"
+              class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-950/80 border border-red-500/50 text-red-200 text-xs font-bold shadow-xs cursor-pointer animate-pulse"
+              title="Acceso Bloqueado. Clic para ingresar clave."
+            >
+              <span>🔒</span>
+              <span>Bloqueado</span>
+            </button>
+          }
+
           <!-- Indicador Tri-Motor Políglota (Redis + DuckDB + SQLite) -->
           <div class="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#05372d] border border-emerald-400/40 text-white text-[10px] font-bold"
                title="Persistencia Políglota: SQLite WAL (Transaccional) + DuckDB 1.5 (Analítico) + Redis 7 (Alertas NoSQL)">
@@ -310,6 +337,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   supabase = inject(SupabaseService);
   network = inject(NetworkService);
   db = inject(DatabaseService);
+  auth = inject(AccessAuthService);
 
   vistaActual = signal<'dashboard' | 'movil' | 'acv' | 'ambulancia' | 'admin'>('dashboard');
   horaActual = '';

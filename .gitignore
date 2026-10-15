@@ -56,5 +56,7 @@ build/
 *.exe
 
 # Database lock files
+*.db
 *.db-shm
 *.db-wal
+

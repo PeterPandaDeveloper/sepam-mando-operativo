@@ -11,8 +11,10 @@ import { ReportModalComponent } from './components/report-modal/report-modal.com
 import { CustomizerSidebarComponent } from './components/customizer-sidebar/customizer-sidebar.component';
 import { LoginModalComponent } from './components/login-modal/login-modal.component';
 import { NetworkModalComponent } from './components/network-modal/network-modal.component';
+import { AccessGuardModalComponent } from './components/access-guard-modal/access-guard-modal.component';
 import { EmergencyService } from './services/emergency.service';
 import { CustomizerService } from './services/customizer.service';
+import { AccessAuthService } from './services/access-auth.service';
 
 @Component({
   selector: 'app-root',
@@ -29,7 +31,8 @@ import { CustomizerService } from './services/customizer.service';
     ReportModalComponent,
     CustomizerSidebarComponent,
     LoginModalComponent,
-    NetworkModalComponent
+    NetworkModalComponent,
+    AccessGuardModalComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'
@@ -37,6 +40,7 @@ import { CustomizerService } from './services/customizer.service';
 export class App implements OnInit, OnDestroy {
   emergency = inject(EmergencyService);
   customizer = inject(CustomizerService);
+  auth = inject(AccessAuthService);
 
   vistaActiva = signal<'dashboard' | 'movil' | 'acv' | 'ambulancia' | 'admin'>('dashboard');
   mostrarModalSupabase = signal(false);

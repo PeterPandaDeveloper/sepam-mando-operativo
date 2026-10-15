@@ -14,6 +14,7 @@ from database import get_connection, init_db, DB_PATH
 import analytics
 import network_manager
 from redis_service import redis_service
+import telegram_service
 
 # Inicializar Base de Datos SQLite al arrancar
 init_db()
@@ -23,6 +24,10 @@ app = FastAPI(
     description="Arquitectura Políglota de Campo: SQLite 3 (WAL) + DuckDB 1.5 OLAP + Redis 7 NoSQL In-Memory",
     version="2.0.0"
 )
+
+@app.on_event("startup")
+def startup_event():
+    telegram_service.telegram_bot.iniciar()
 
 # Habilitar CORS total para permitir conexiones desde Vercel HTTPS, red LAN y localhost
 app.add_middleware(
@@ -73,6 +78,16 @@ class LogCreate(BaseModel):
     accion: str
     detalles: str
     dispositivo: Optional[str] = "Web"
+
+class ClaveVerificar(BaseModel):
+    key: str
+
+class ClaveGenerar(BaseModel):
+    solicitado_por: Optional[str] = "Web SuperAdmin"
+    duracion_horas: Optional[int] = 2
+
+class TelegramConfig(BaseModel):
+    token: str
 
 @app.get("/")
 def raiz():
@@ -147,6 +162,86 @@ def disparar_alerta_prueba():
     }
     enviado = redis_service.publicar_alerta(alerta_prueba)
     return {"mensaje": "Alerta de prueba emitida en Redis", "exito": enviado, "alerta": alerta_prueba}
+
+# --- ENDPOINTS SEGURIDAD Y CONTROL DE ACCESO (TELEGRAM 2 HORAS) ---
+
+@app.post("/api/auth/verificar-key")
+def verificar_key(item: ClaveVerificar):
+    """
+    Verifica una clave de acceso temporal de 2 horas (Telegram / Master).
+    """
+    valido, ttl, datos, msj = telegram_service.verificar_clave(item.key)
+    if not valido:
+        return {
+            "valido": False,
+            "mensaje": msj,
+            "expira_en_segundos": 0
+        }
+    return {
+        "valido": True,
+        "mensaje": msj,
+        "expira_en_segundos": ttl,
+        "expira_at_timestamp": datos.get("expira_at_timestamp") if datos else int((time.time() + ttl) * 1000),
+        "hora_expira": datos.get("hora_expira", "2 horas"),
+        "clave": item.key.strip(),
+        "datos": datos
+    }
+
+@app.post("/api/auth/generar-key")
+def generar_key(item: Optional[ClaveGenerar] = None):
+    """
+    Genera una nueva clave de acceso de 2 horas (formato: mayúsculas, números, % $ !)
+    """
+    solicitado_por = item.solicitado_por if item else "Web SuperAdmin"
+    duracion = item.duracion_horas if item else 2
+    
+    nueva_clave = telegram_service.generar_codigo_seguro()
+    info = telegram_service.registrar_clave_en_persistencia(
+        clave=nueva_clave,
+        generada_por=solicitado_por,
+        duracion_horas=duracion
+    )
+    return {
+        "mensaje": "Clave generada exitosamente",
+        "clave": nueva_clave,
+        "expira_en_segundos": info["duracion_segundos"],
+        "expira_at_timestamp": info["expira_at_timestamp"],
+        "hora_expira": info["hora_expira"],
+        "fecha_expira": info["fecha_expira"],
+        "enlace_directo": f"{telegram_service.DASHBOARD_URL}/?key={nueva_clave}"
+    }
+
+@app.get("/api/auth/claves-activas")
+def listar_claves():
+    """
+    Retorna la lista de claves activas y tiempo restante.
+    """
+    return telegram_service.listar_claves_vigentes()
+
+@app.get("/api/auth/telegram-info")
+def info_telegram():
+    """
+    Estado de integración del bot de Telegram.
+    """
+    bot = telegram_service.telegram_bot
+    return {
+        "activo": bot.activo,
+        "tiene_token": bool(bot.token and not bot.token.endswith("example")),
+        "token_preview": f"{bot.token[:8]}..." if bot.token and len(bot.token) > 10 else "No configurado",
+        "dashboard_url": telegram_service.DASHBOARD_URL,
+        "duracion_default": "2 Horas (7200s)"
+    }
+
+@app.post("/api/auth/config-telegram")
+def configurar_telegram(item: TelegramConfig):
+    """
+    Configura o actualiza el token del Bot de Telegram en caliente.
+    """
+    telegram_service.telegram_bot.configurar_token(item.token)
+    return {
+        "mensaje": "Token de Telegram configurado exitosamente",
+        "activo": telegram_service.telegram_bot.activo
+    }
 
 # --- GESTIÓN DE EVENTOS ---
 
