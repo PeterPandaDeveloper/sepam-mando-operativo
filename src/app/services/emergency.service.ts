@@ -1,4 +1,5 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject, OnDestroy } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { 
   Atencion, 
   Sector, 
@@ -21,7 +22,17 @@ import { SupabaseService } from './supabase.service';
 @Injectable({
   providedIn: 'root'
 })
-export class EmergencyService {
+export class EmergencyService implements OnDestroy {
+  private http = inject(HttpClient);
+  private intervaloSync: any = null;
+  private syncEnProgreso = false;
+
+  private get baseUrl(): string {
+    if (typeof window !== 'undefined' && window.location.port === '4200') {
+      return `http://${window.location.hostname}:8000`;
+    }
+    return '';
+  }
 
   // Bitácora / Log de Auditoría Operativa y Accesos (Reporte 2 Técnico para el Administrador)
   logsAuditoria = signal<LogAuditoria[]>([
@@ -166,15 +177,15 @@ export class EmergencyService {
     aforoEstimado: 28000
   });
 
-  // Sectores operativos modificables
-  sectores = signal<Sector[]>([
+  // Sectores operativos base
+  sectoresBase = signal<Sector[]>([
     {
       id: 'sec-a',
       codigo: 'ZONA A',
       nombre: 'ZONA A - GRADAS',
       capacidadPersonal: 4,
       personalAsignado: ['param-2', 'param-5', 'param-6'],
-      totalAtenciones: 2,
+      totalAtenciones: 0,
       alertasActivas: 0
     },
     {
@@ -183,7 +194,7 @@ export class EmergencyService {
       nombre: 'ZONA B - PUERTA Y ACCESOS',
       capacidadPersonal: 4,
       personalAsignado: ['param-1', 'param-7'],
-      totalAtenciones: 1,
+      totalAtenciones: 0,
       alertasActivas: 0
     },
     {
@@ -192,8 +203,8 @@ export class EmergencyService {
       nombre: 'ZONA C - ESCENARIO Y FOSO',
       capacidadPersonal: 6,
       personalAsignado: ['param-3', 'param-4', 'param-8'],
-      totalAtenciones: 3,
-      alertasActivas: 1
+      totalAtenciones: 0,
+      alertasActivas: 0
     },
     {
       id: 'sec-d',
@@ -201,7 +212,7 @@ export class EmergencyService {
       nombre: 'ZONA D - GENERAL Y CANCHA',
       capacidadPersonal: 6,
       personalAsignado: ['param-9', 'param-10', 'param-11', 'param-12'],
-      totalAtenciones: 1,
+      totalAtenciones: 0,
       alertasActivas: 0
     }
   ]);
@@ -401,7 +412,269 @@ export class EmergencyService {
     this.atenciones().filter(a => a.estado === 'EN_AMBULANCIA' || a.estado === 'TRASLADO_AMBULANCIA')
   );
 
-  constructor(private supabase: SupabaseService) {}
+  // Sectores computados reactivamente en tiempo real según la lista viva de atenciones
+  sectores = computed<Sector[]>(() => {
+    const atencionesActuales = this.atenciones();
+    return this.sectoresBase().map(sec => {
+      const atencionesSector = atencionesActuales.filter(a => 
+        a.sectorId === sec.id || 
+        (a.sectorNombre && a.sectorNombre.toLowerCase().includes(sec.codigo.toLowerCase()))
+      );
+
+      const alertasActivas = atencionesSector.filter(a => 
+        (a.triage === 'ROJO' || a.triage === 'AMARILLO') && 
+        a.estado !== 'ALTA_ACV' && 
+        a.estado !== 'ALTA_IN_SITU' && 
+        a.estado !== 'ALTA_AMBULANCIA' && 
+        a.estado !== 'TRASLADO_HOSPITALARIO'
+      ).length;
+
+      return {
+        ...sec,
+        totalAtenciones: atencionesSector.length,
+        alertasActivas
+      };
+    });
+  });
+
+  constructor(private supabase: SupabaseService) {
+    this.iniciarSincronizacionBackend();
+  }
+
+  ngOnDestroy() {
+    if (this.intervaloSync) {
+      clearInterval(this.intervaloSync);
+      this.intervaloSync = null;
+    }
+  }
+
+  // ==========================================
+  // SINCRONIZACIÓN PERSISTENCIA POLÍGLOTA
+  // ==========================================
+
+  private mapearAtencionABackend(a: Atencion) {
+    const ahora = new Date();
+    const fecha = ahora.toLocaleDateString();
+    const timestamp = a.horaInicio || ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    let derivacion = 'ALTA';
+    if (a.estado === 'TRASLADO_HOSPITALARIO' || a.estado === 'EN_AMBULANCIA' || a.estado === 'TRASLADO_AMBULANCIA' || a.resolucionAmbulancia === 'TRASLADO_HOSPITAL') {
+      derivacion = 'AMBULANCIA';
+    } else if (a.acvDestinoId || a.estado === 'TRASLADO_AL_ACV' || a.estado === 'PENDIENTE_TRIAGE' || a.estado === 'EN_CONSULTA' || a.estado === 'EN_SALA_ESPERA') {
+      derivacion = 'ACV';
+    } else if (a.estado === 'ALTA_IN_SITU' || a.estado === 'ALTA_ACV' || a.estado === 'ALTA_AMBULANCIA') {
+      derivacion = 'ALTA';
+    }
+
+    return {
+      id: a.id,
+      codigo: a.codigo || a.id,
+      timestamp: timestamp,
+      fecha: fecha,
+      sector_id: a.sectorId || '',
+      sector_nombre: a.sectorNombre || '',
+      paramedico_id: a.paramedicoId || '',
+      paramedico_nombre: a.paramedicoNombre || '',
+      triage_color: a.triage || 'VERDE',
+      paciente_nombre: (a.nombresPaciente || a.apellidosPaciente) 
+        ? `${a.nombresPaciente || ''} ${a.apellidosPaciente || ''}`.trim() 
+        : 'No identificado',
+      paciente_edad: a.edadPaciente || 0,
+      paciente_genero: a.generoPaciente || 'DESCONOCIDO',
+      motivo: a.motivo || 'Sin motivo registrado',
+      derivacion: derivacion,
+      ambulancia_codigo: a.ambulanciaCodigo || '',
+      hospital: a.casaSaludDestino || '',
+      detalles: {
+        cedula: a.cedula,
+        nombresPaciente: a.nombresPaciente,
+        apellidosPaciente: a.apellidosPaciente,
+        edadPaciente: a.edadPaciente,
+        generoPaciente: a.generoPaciente,
+        medicamentosInSitu: a.medicamentosInSitu,
+        motivoDetalle: a.motivoDetalle,
+        ubicacionEspecifica: a.ubicacionEspecifica,
+        estado: a.estado,
+        acvDestinoId: a.acvDestinoId,
+        acvDestinoNombre: a.acvDestinoNombre,
+        medioTraslado: a.medioTraslado,
+        condicionAparente: a.condicionAparente,
+        observacionesTraslado: a.observacionesTraslado,
+        triageHora: a.triageHora,
+        triageEvaluador: a.triageEvaluador,
+        medicoAsignado: a.medicoAsignado,
+        signosVitales: a.signosVitales,
+        anamnesis: a.anamnesis,
+        examenFisico: a.examenFisico,
+        diagnostico: a.diagnostico,
+        tratamiento: a.tratamiento,
+        resolucionACV: a.resolucionACV,
+        ambulanciaId: a.ambulanciaId,
+        paramedicoAmbulancia: a.paramedicoAmbulancia,
+        hojaAtencionNumero: a.hojaAtencionNumero,
+        medicoReceptorHospital: a.medicoReceptorHospital,
+        observacionesAmbulancia: a.observacionesAmbulancia,
+        horaEntregaHospital: a.horaEntregaHospital
+      }
+    };
+  }
+
+  private mapearBackendAAtencion(row: any): Atencion {
+    const d = row.detalles || {};
+    return {
+      id: row.id || row.codigo,
+      codigo: row.codigo,
+      eventoId: 'evt-001',
+      sectorId: row.sector_id || d.sectorId || 'sec-a',
+      sectorNombre: row.sector_nombre || d.sectorNombre || 'ZONA GENERAL',
+      ubicacionEspecifica: d.ubicacionEspecifica || row.sector_nombre || 'En terreno',
+      paramedicoId: row.paramedico_id || d.paramedicoId || 'param-1',
+      paramedicoNombre: row.paramedico_nombre || d.paramedicoNombre || 'Paramédico',
+      motivo: (row.motivo as MotivoAtencion) || 'Malestar general',
+      motivoDetalle: d.motivoDetalle || row.motivo,
+      estado: d.estado || (row.derivacion === 'AMBULANCIA' ? 'TRASLADO_HOSPITALARIO' : (row.derivacion === 'ACV' ? 'PENDIENTE_TRIAGE' : 'EN_ATENCION')),
+      horaInicio: row.timestamp || '16:00',
+      cedula: d.cedula,
+      nombresPaciente: d.nombresPaciente || (row.paciente_nombre !== 'No identificado' ? row.paciente_nombre : undefined),
+      apellidosPaciente: d.apellidosPaciente,
+      edadPaciente: row.paciente_edad || d.edadPaciente,
+      generoPaciente: row.paciente_genero || d.generoPaciente || 'M',
+      medicamentosInSitu: d.medicamentosInSitu,
+      destinoInicial: d.destinoInicial,
+      acvDestinoId: d.acvDestinoId,
+      acvDestinoNombre: d.acvDestinoNombre,
+      medioTraslado: d.medioTraslado,
+      condicionAparente: d.condicionAparente,
+      observacionesTraslado: d.observacionesTraslado,
+      horaInicioTraslado: d.horaInicioTraslado,
+      horaLlegadaACV: d.horaLlegadaACV,
+      triage: (row.triage_color as TriageColor) || d.triage,
+      triageHora: d.triageHora || row.timestamp,
+      triageEvaluador: d.triageEvaluador,
+      medicoAsignado: d.medicoAsignado,
+      signosVitales: d.signosVitales,
+      anamnesis: d.anamnesis,
+      examenFisico: d.examenFisico,
+      diagnostico: d.diagnostico,
+      tratamiento: d.tratamiento,
+      resolucionACV: d.resolucionACV,
+      horaResolucionACV: d.horaResolucionACV,
+      ambulanciaId: d.ambulanciaId,
+      ambulanciaCodigo: row.ambulancia_codigo || d.ambulanciaCodigo,
+      paramedicoAmbulancia: d.paramedicoAmbulancia,
+      horaLlegadaAmbulancia: d.horaLlegadaAmbulancia,
+      resolucionAmbulancia: d.resolucionAmbulancia,
+      hojaAtencionNumero: d.hojaAtencionNumero,
+      casaSaludDestino: row.hospital || d.casaSaludDestino,
+      medicoReceptorHospital: d.medicoReceptorHospital,
+      horaEntregaHospital: d.horaEntregaHospital,
+      observacionesAmbulancia: d.observacionesAmbulancia
+    };
+  }
+
+  guardarAtencionEnBackend(atencion: Atencion) {
+    const payload = this.mapearAtencionABackend(atencion);
+    this.http.post(`${this.baseUrl}/api/atenciones`, payload).subscribe({
+      next: () => {},
+      error: (err) => console.warn('Aviso: Atencion guardada en memoria local (servidor desconectado)', err)
+    });
+  }
+
+  guardarLogEnBackend(log: LogAuditoria) {
+    const payload = {
+      id: log.id,
+      timestamp: log.timestamp,
+      fecha: log.fecha,
+      usuario: log.usuario,
+      nombre_usuario: log.nombreUsuario,
+      rol: log.rol,
+      accion: log.accion,
+      detalles: log.detalles,
+      dispositivo: log.dispositivo
+    };
+    this.http.post(`${this.baseUrl}/api/logs`, payload).subscribe({
+      next: () => {},
+      error: () => {}
+    });
+  }
+
+  guardarEventoEnBackend(evt: EventoOperativo) {
+    const payload = {
+      nombre: evt.nombre,
+      tipo: evt.tipo,
+      ciudad: evt.ciudad,
+      lugar: evt.lugar,
+      fecha: evt.fecha,
+      horario: evt.horario,
+      riesgo: evt.riesgo,
+      aforo_estimado: evt.aforoEstimado
+    };
+    this.http.post(`${this.baseUrl}/api/evento`, payload).subscribe({
+      next: () => {},
+      error: () => {}
+    });
+  }
+
+  cargarAtencionesDesdeBackend() {
+    if (this.syncEnProgreso) return;
+    this.syncEnProgreso = true;
+    this.http.get<any[]>(`${this.baseUrl}/api/atenciones`).subscribe({
+      next: (rows) => {
+        this.syncEnProgreso = false;
+        if (rows && rows.length > 0) {
+          const atencionesRemotas = rows.map(r => this.mapearBackendAAtencion(r));
+          this.atenciones.update(locales => {
+            const mapLocales = new Map(locales.map(a => [a.id, a]));
+            atencionesRemotas.forEach(rem => {
+              if (!mapLocales.has(rem.id)) {
+                mapLocales.set(rem.id, rem);
+              }
+            });
+            return Array.from(mapLocales.values());
+          });
+        }
+      },
+      error: () => {
+        this.syncEnProgreso = false;
+      }
+    });
+  }
+
+  cargarLogsDesdeBackend() {
+    this.http.get<any[]>(`${this.baseUrl}/api/logs`).subscribe({
+      next: (rows) => {
+        if (rows && rows.length > 0) {
+          const logsRemotos: LogAuditoria[] = rows.map(r => ({
+            id: r.id,
+            timestamp: r.timestamp,
+            fecha: r.fecha,
+            usuario: r.usuario,
+            nombreUsuario: r.nombre_usuario || r.usuario,
+            rol: r.rol,
+            accion: r.accion,
+            detalles: r.detalles,
+            dispositivo: r.dispositivo || 'Web'
+          }));
+          this.logsAuditoria.update(locales => {
+            const mapLogs = new Map(locales.map(l => [l.id, l]));
+            logsRemotos.forEach(rem => mapLogs.set(rem.id, rem));
+            return Array.from(mapLogs.values());
+          });
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  iniciarSincronizacionBackend() {
+    if (typeof window === 'undefined') return;
+    this.cargarAtencionesDesdeBackend();
+    this.cargarLogsDesdeBackend();
+    if (this.intervaloSync) clearInterval(this.intervaloSync);
+    this.intervaloSync = setInterval(() => {
+      this.cargarAtencionesDesdeBackend();
+    }, 4000);
+  }
 
   playTacticalAlertTone(freq: number = 880, duration: number = 0.15) {
     try {
@@ -452,17 +725,17 @@ export class EmergencyService {
       totalAtenciones: 0,
       alertasActivas: 0
     };
-    this.sectores.update(list => [...list, sec]);
+    this.sectoresBase.update(list => [...list, sec]);
     this.mostrarNotificacion(`Sector ${sec.nombre} añadido`, 'exito');
   }
 
   editarSector(id: string, cambios: Partial<Sector>) {
-    this.sectores.update(list => list.map(s => s.id === id ? { ...s, ...cambios } : s));
+    this.sectoresBase.update(list => list.map(s => s.id === id ? { ...s, ...cambios } : s));
     this.mostrarNotificacion('Sector operativo modificado exitosamente', 'info');
   }
 
   eliminarSector(id: string) {
-    this.sectores.update(list => list.filter(s => s.id !== id));
+    this.sectoresBase.update(list => list.filter(s => s.id !== id));
     this.mostrarNotificacion('Sector eliminado', 'alerta');
   }
 
@@ -517,6 +790,7 @@ export class EmergencyService {
 
   actualizarEvento(datos: Partial<EventoOperativo>) {
     this.evento.update(e => ({ ...e, ...datos }));
+    this.guardarEventoEnBackend(this.evento());
     this.mostrarNotificacion('Datos del evento masivo actualizados', 'exito');
   }
 
@@ -557,6 +831,7 @@ export class EmergencyService {
 
     this.actualizarEstadoParamedico(param.id, 'EN_ATENCION', nuevoId);
     this.atenciones.update(list => [nuevaAtencion, ...list]);
+    this.guardarAtencionEnBackend(nuevaAtencion);
     this.playTacticalAlertTone(800, 0.2);
     this.mostrarNotificacion(`Nueva atención iniciada: ${nuevoId} por ${param.nombre}`, 'alerta');
 
@@ -577,6 +852,8 @@ export class EmergencyService {
 
     const param = this.paramedicoActivo();
     this.actualizarEstadoParamedico(param.id, 'DISPONIBLE');
+    const act = this.atenciones().find(a => a.id === atencionId);
+    if (act) this.guardarAtencionEnBackend(act);
     this.mostrarNotificacion(`Atención ${atencionId} resuelta in situ. Alta médica otorgada.`, 'exito');
   }
 
@@ -609,6 +886,8 @@ export class EmergencyService {
 
     const param = this.paramedicoActivo();
     this.actualizarEstadoParamedico(param.id, 'EN_TRASLADO', atencionId);
+    const act = this.atenciones().find(a => a.id === atencionId);
+    if (act) this.guardarAtencionEnBackend(act);
     this.playTacticalAlertTone(650, 0.2);
     this.mostrarNotificacion(`Traslado iniciado para ${atencionId} hacia ${acv?.codigo || 'ACV'}`, 'info');
   }
@@ -640,6 +919,7 @@ export class EmergencyService {
     const atencion = this.atenciones().find(a => a.id === atencionId);
     if (atencion) {
       this.actualizarEstadoParamedico(atencion.paramedicoId, 'DISPONIBLE');
+      this.guardarAtencionEnBackend(atencion);
     }
 
     this.playTacticalAlertTone(900, 0.1);
@@ -663,12 +943,19 @@ export class EmergencyService {
       return a;
     }));
 
+    const act = this.atenciones().find(a => a.id === atencionId);
+    if (act) {
+      this.guardarAtencionEnBackend(act);
+    }
+
     this.playTacticalAlertTone(color === 'ROJO' ? 1200 : 700, 0.25);
     this.mostrarNotificacion(`Triage ${color} asignado a ${atencionId}`, color === 'ROJO' ? 'alerta' : 'exito');
   }
 
   llamarAConsultaACV(atencionId: string, medicoNombre: string) {
     this.atenciones.update(list => list.map(a => a.id === atencionId ? { ...a, estado: 'EN_CONSULTA', medicoAsignado: medicoNombre } : a));
+    const act = this.atenciones().find(a => a.id === atencionId);
+    if (act) this.guardarAtencionEnBackend(act);
     this.mostrarNotificacion(`Paciente ${atencionId} ingresó a consulta con ${medicoNombre}`, 'info');
   }
 
@@ -701,6 +988,8 @@ export class EmergencyService {
       return a;
     }));
 
+    const act = this.atenciones().find(a => a.id === atencionId);
+    if (act) this.guardarAtencionEnBackend(act);
     this.mostrarNotificacion(`Resolución ACV registrada para ${atencionId}`, 'exito');
   }
 
@@ -723,6 +1012,8 @@ export class EmergencyService {
       return a;
     }));
 
+    const act = this.atenciones().find(a => a.id === atencionId);
+    if (act) this.guardarAtencionEnBackend(act);
     this.mostrarNotificacion(`Paciente ${atencionId} derivado hacia ambulancia ${amb?.codigo}`, 'alerta');
   }
 
@@ -745,6 +1036,8 @@ export class EmergencyService {
       return a;
     }));
 
+    const act = this.atenciones().find(a => a.id === atencionId);
+    if (act) this.guardarAtencionEnBackend(act);
     this.mostrarNotificacion(`Paciente ${atencionId} abordó la ambulancia ${amb?.codigo}`, 'info');
   }
 
@@ -775,6 +1068,8 @@ export class EmergencyService {
       return a;
     }));
 
+    const act = this.atenciones().find(a => a.id === atencionId);
+    if (act) this.guardarAtencionEnBackend(act);
     this.playTacticalAlertTone(500, 0.4);
     const msj = resolucion === 'ALTA_AMBULATORIA'
       ? `Alta ambulatoria emitida en unidad móvil para ${atencionId}`
@@ -816,6 +1111,7 @@ export class EmergencyService {
     };
 
     this.logsAuditoria.update(logs => [nuevoLog, ...logs]);
+    this.guardarLogEnBackend(nuevoLog);
   }
 
   setUsuarioSesion(usr: UsuarioSesion) {

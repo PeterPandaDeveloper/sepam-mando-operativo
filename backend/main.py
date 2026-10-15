@@ -1,5 +1,7 @@
 import os
 import json
+import time
+import uuid
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -51,7 +53,7 @@ class AtencionCreate(BaseModel):
     sector_nombre: Optional[str] = ""
     paramedico_id: Optional[str] = ""
     paramedico_nombre: Optional[str] = ""
-    triage_color: str # ROJO, AMARILLO, VERDE, NEGRO
+    triage_color: Optional[str] = "VERDE" # ROJO, AMARILLO, VERDE, NEGRO
     paciente_nombre: Optional[str] = "No identificado"
     paciente_edad: Optional[int] = 0
     paciente_genero: Optional[str] = "DESCONOCIDO"
@@ -133,7 +135,7 @@ def alertas_recientes(limite: int = 10):
 def disparar_alerta_prueba():
     """Dispara una alerta de prueba en el canal de Redis para simulacros"""
     alerta_prueba = {
-        "id": f"sim-{int(os.times().elapsed * 1000)}",
+        "id": f"sim-{uuid.uuid4().hex[:8]}",
         "codigo": "SIM-01",
         "triage_color": "ROJO",
         "sector_nombre": "ZONA C - ESCENARIO Y FOSO",
@@ -200,7 +202,7 @@ def guardar_atencion(item: AtencionCreate):
     conn = get_connection()
     c = conn.cursor()
     
-    atencion_id = item.id or f"at-{int(os.times().elapsed * 1000)}"
+    atencion_id = item.id or f"at-{int(time.time() * 1000)}"
     detalles_str = json.dumps(item.detalles or {})
 
     # 1. Guardar de forma transaccional en SQLite (WAL)
@@ -213,20 +215,20 @@ def guardar_atencion(item: AtencionCreate):
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     """, (
         atencion_id, item.codigo, item.timestamp, item.fecha, item.sector_id, item.sector_nombre,
-        item.paramedico_id, item.paramedico_nombre, item.triage_color, item.paciente_nombre,
+        item.paramedico_id, item.paramedico_nombre, (item.triage_color or "VERDE"), item.paciente_nombre,
         item.paciente_edad, item.paciente_genero, item.motivo, item.derivacion, item.ambulancia_codigo,
         item.hospital, detalles_str
     ))
 
     # 2. Registrar en bitácora de auditoría
-    log_id = f"log-{int(os.times().elapsed * 1000)}"
+    log_id = f"log-{int(time.time() * 1000)}-{uuid.uuid4().hex[:4]}"
     c.execute("""
         INSERT INTO logs_auditoria (id, timestamp, fecha, usuario, nombre_usuario, rol, accion, detalles, dispositivo)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     """, (
         log_id, item.timestamp, item.fecha, item.paramedico_nombre or "sistema",
         item.paramedico_nombre or "Paramédico", "PARAMEDICO_CAMPO", "NUEVA_ATENCION",
-        f"Atención {item.codigo} registrada. Triage: {item.triage_color}. Paciente: {item.paciente_nombre}",
+        f"Atención {item.codigo} registrada. Triage: {item.triage_color or 'VERDE'}. Paciente: {item.paciente_nombre}",
         "App Móvil / Web"
     ))
 
@@ -237,17 +239,18 @@ def guardar_atencion(item: AtencionCreate):
     redis_service.invalidar_cache()
 
     # 4. Publicar Alerta NoSQL en tiempo real vía Redis si es ROJO, AMARILLO o Traslado de Ambulancia
-    if item.triage_color in ["ROJO", "AMARILLO"] or item.derivacion == "AMBULANCIA":
+    color_seguro = item.triage_color or "VERDE"
+    if color_seguro in ["ROJO", "AMARILLO"] or item.derivacion == "AMBULANCIA":
         alerta = {
             "id": atencion_id,
             "codigo": item.codigo,
-            "triage_color": item.triage_color,
+            "triage_color": color_seguro,
             "sector_nombre": item.sector_nombre or "General",
             "paciente_nombre": item.paciente_nombre or "No identificado",
             "motivo": item.motivo or "Sin motivo",
             "derivacion": item.derivacion or "ALTA",
             "hora": item.timestamp,
-            "tipo_alerta": "CRITICA" if item.triage_color == "ROJO" else "URGENTE"
+            "tipo_alerta": "CRITICA" if color_seguro == "ROJO" else "URGENTE"
         }
         redis_service.publicar_alerta(alerta)
 
@@ -266,7 +269,7 @@ def listar_logs():
 def registrar_log(item: LogCreate):
     conn = get_connection()
     c = conn.cursor()
-    log_id = item.id or f"log-{int(os.times().elapsed * 1000)}"
+    log_id = item.id or f"log-{int(time.time() * 1000)}-{uuid.uuid4().hex[:4]}"
     c.execute("""
         INSERT INTO logs_auditoria (id, timestamp, fecha, usuario, nombre_usuario, rol, accion, detalles, dispositivo)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);

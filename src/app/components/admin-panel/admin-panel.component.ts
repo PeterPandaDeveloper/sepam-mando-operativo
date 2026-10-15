@@ -1253,6 +1253,30 @@ export class AdminPanelComponent {
     this.exportarACVsCSV();
   }
 
+  private parsearLineaCSV(line: string): string[] {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (c === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += c;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  }
+
   // ==========================================
   // IMPORTACIÓN EN LOTE DESDE CSV
   // ==========================================
@@ -1279,7 +1303,7 @@ export class AdminPanelComponent {
       if (tipo === 'paramedicos') {
         const nuevos: Paramedico[] = [];
         dataLines.forEach((l, idx) => {
-          const parts = l.split(',').map(s => s.replace(/^"|"$/g, '').trim());
+          const parts = this.parsearLineaCSV(l);
           if (parts.length >= 2) {
             const num = this.emergency.personal().length + idx + 1;
             nuevos.push({
@@ -1304,7 +1328,7 @@ export class AdminPanelComponent {
       if (tipo === 'ambulancias') {
         const nuevas: Ambulancia[] = [];
         dataLines.forEach((l, idx) => {
-          const parts = l.split(',').map(s => s.replace(/^"|"$/g, '').trim());
+          const parts = this.parsearLineaCSV(l);
           if (parts.length >= 2) {
             const num = this.emergency.ambulancias().length + idx + 1;
             nuevas.push({
@@ -1327,7 +1351,7 @@ export class AdminPanelComponent {
       if (tipo === 'acvs') {
         const nuevosACVs: ACV[] = [];
         dataLines.forEach((l, idx) => {
-          const parts = l.split(',').map(s => s.replace(/^"|"$/g, '').trim());
+          const parts = this.parsearLineaCSV(l);
           if (parts.length >= 2) {
             const num = this.emergency.acvs().length + idx + 1;
             nuevosACVs.push({

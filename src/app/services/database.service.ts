@@ -1,6 +1,5 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { EmergencyService } from './emergency.service';
 
 export interface DuckDBResumen {
   triage: {
@@ -65,9 +64,8 @@ export interface EstadoBackend {
 @Injectable({
   providedIn: 'root'
 })
-export class DatabaseService {
+export class DatabaseService implements OnDestroy {
   private http = inject(HttpClient);
-  private emergency = inject(EmergencyService);
 
   // Determinar URL del backend dinámicamente (en Vercel / Cloud usa proxy relativo '')
   private get baseUrl(): string {
@@ -95,10 +93,18 @@ export class DatabaseService {
   alertaActiva = signal<RedisAlerta | null>(null);
   private lastAlertId: string | null = null;
   private intervaloPolling: any = null;
+  private fallosConsecutivos = 0;
 
   constructor() {
     this.verificarConexion();
     this.iniciarMonitorAlertas();
+  }
+
+  ngOnDestroy() {
+    if (this.intervaloPolling) {
+      clearInterval(this.intervaloPolling);
+      this.intervaloPolling = null;
+    }
   }
 
   verificarConexion() {
@@ -106,6 +112,7 @@ export class DatabaseService {
       next: (res) => {
         if (res.status === 'ONLINE') {
           this.conectado.set(true);
+          this.fallosConsecutivos = 0;
           if (res.motores) {
             this.motoresInfo.set(res.motores);
           }
@@ -139,8 +146,17 @@ export class DatabaseService {
 
   iniciarMonitorAlertas() {
     if (typeof window === 'undefined') return;
+    if (this.intervaloPolling) clearInterval(this.intervaloPolling);
     // Polling ligero cada 4 segundos a la lista en memoria de Redis
     this.intervaloPolling = setInterval(() => {
+      // Si hay más de 4 fallos consecutivos y no estamos conectados, evitar saturar consola
+      if (this.fallosConsecutivos > 4 && !this.conectado()) {
+        // Chequear conexión con baja frecuencia
+        if (this.fallosConsecutivos % 5 === 0) {
+          this.verificarConexion();
+        }
+        return;
+      }
       this.consultarAlertasRedis();
     }, 4000);
   }
@@ -148,6 +164,7 @@ export class DatabaseService {
   consultarAlertasRedis() {
     this.http.get<RedisAlerta[]>(`${this.baseUrl}/api/alertas/recientes?limite=10`).subscribe({
       next: (alertas) => {
+        this.fallosConsecutivos = 0;
         this.alertasRecientes.set(alertas);
         if (alertas && alertas.length > 0) {
           const masReciente = alertas[0];
@@ -159,10 +176,13 @@ export class DatabaseService {
         }
       },
       error: () => {
+        this.fallosConsecutivos++;
         // Fallback silencioso si no hay conexión
       }
     });
   }
+
+
 
   cerrarAlertaActiva() {
     this.alertaActiva.set(null);

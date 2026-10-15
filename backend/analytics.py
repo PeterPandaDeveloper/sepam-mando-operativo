@@ -1,3 +1,4 @@
+import sqlite3
 import duckdb
 import os
 import pandas as pd
@@ -7,13 +8,43 @@ def get_duckdb_connection():
     """
     Crea una sesión DuckDB en memoria conectada directamente al archivo SQLite.
     Permite consultas analíticas columnares a velocidad C.
+    Maneja modo offline y fallback transparente si la extensión sqlite no está en caché.
     """
     con = duckdb.connect()
-    con.execute("INSTALL sqlite;")
-    con.execute("LOAD sqlite;")
-    # Escapar ruta para Windows
-    safe_db_path = DB_PATH.replace("\\", "/")
-    con.execute(f"ATTACH '{safe_db_path}' AS sepam (TYPE SQLITE);")
+    extension_cargada = False
+    
+    # 1. Intentar cargar la extensión sqlite directamente (sin descargar)
+    try:
+        con.execute("LOAD sqlite;")
+        extension_cargada = True
+    except Exception:
+        # 2. Si no está en caché, intentar instalarla
+        try:
+            con.execute("INSTALL sqlite;")
+            con.execute("LOAD sqlite;")
+            extension_cargada = True
+        except Exception:
+            # Modo 100% Offline: Fallback a ingesta en memoria vía sqlite3 nativo de Python
+            extension_cargada = False
+
+    if extension_cargada:
+        safe_db_path = DB_PATH.replace("\\", "/").replace("'", "''")
+        con.execute(f"ATTACH '{safe_db_path}' AS sepam (TYPE SQLITE);")
+    else:
+        # Fallback offline garantizado: Ingesta desde SQLite a DuckDB en memoria
+        try:
+            sq_conn = sqlite3.connect(DB_PATH)
+            df_atenciones = pd.read_sql("SELECT * FROM atenciones", sq_conn)
+            df_logs = pd.read_sql("SELECT * FROM logs_auditoria", sq_conn)
+            sq_conn.close()
+            con.execute("CREATE SCHEMA IF NOT EXISTS sepam;")
+            con.register("df_atenciones_temp", df_atenciones)
+            con.register("df_logs_temp", df_logs)
+            con.execute("CREATE OR REPLACE VIEW sepam.atenciones AS SELECT * FROM df_atenciones_temp;")
+            con.execute("CREATE OR REPLACE VIEW sepam.logs_auditoria AS SELECT * FROM df_logs_temp;")
+        except Exception as e:
+            print(f"Error en fallback offline DuckDB: {e}")
+            
     return con
 
 def obtener_resumen_operativo():
@@ -58,7 +89,7 @@ def obtener_resumen_operativo():
             ORDER BY hora ASC;
         """).df().to_dict(orient="records")
 
-        # 4. Total de logs y accesos
+        # 4. Total de logs registrados
         total_logs = con.execute("SELECT COUNT(*) FROM sepam.logs_auditoria;").fetchone()[0]
 
         return {
@@ -70,69 +101,68 @@ def obtener_resumen_operativo():
     finally:
         con.close()
 
-def generar_reporte_excel(output_path: str):
-    """
-    Genera un archivo Excel profesional con 3 pestañas usando DuckDB y Pandas:
-    1. KPIs y Estadísticas de Concierto
-    2. Detalle Clínico de Atenciones
-    3. Bitácora de Auditoría y Trazabilidad (Reporte 2)
-    """
+def generar_reporte_excel(ruta_destino: str):
+    """Genera un archivo Excel profesional multi-hoja usando DuckDB y Pandas"""
     con = get_duckdb_connection()
     try:
-        # Pestaña 1: Resumen
-        df_evento = con.execute("SELECT * FROM sepam.evento;").df()
-        
-        # Pestaña 2: Atenciones completas
         df_atenciones = con.execute("""
             SELECT 
-                codigo as 'Código',
-                fecha as 'Fecha',
-                timestamp as 'Hora',
-                triage_color as 'Triage',
-                paciente_nombre as 'Paciente',
-                paciente_edad as 'Edad',
-                paciente_genero as 'Género',
-                motivo as 'Motivo / Diagnóstico',
-                sector_nombre as 'Ubicación / Sector',
-                paramedico_nombre as 'Paramédico Responsable',
-                derivacion as 'Destino',
-                ambulancia_codigo as 'Ambulancia',
-                hospital as 'Hospital Receptor',
-                detalles_json as 'Signos Vitales y Tratamiento'
+                codigo as 'CÓDIGO',
+                timestamp as 'HORA',
+                fecha as 'FECHA',
+                sector_nombre as 'SECTOR',
+                paramedico_nombre as 'PARAMÉDICO',
+                triage_color as 'TRIAGE',
+                paciente_nombre as 'PACIENTE',
+                paciente_edad as 'EDAD',
+                paciente_genero as 'GÉNERO',
+                motivo as 'MOTIVO DE ATENCIÓN',
+                derivacion as 'RESOLUCIÓN / DESTINO',
+                ambulancia_codigo as 'AMBULANCIA',
+                hospital as 'HOSPITAL RECEPTOR',
+                detalles_json as 'DETALLES CLÍNICOS'
             FROM sepam.atenciones
             ORDER BY timestamp DESC;
         """).df()
 
-        # Pestaña 3: Logs de Auditoría
         df_logs = con.execute("""
             SELECT 
-                timestamp as 'Hora',
-                fecha as 'Fecha',
-                usuario as 'Usuario',
-                nombre_usuario as 'Nombre',
-                rol as 'Rol Operativo',
-                accion as 'Acción',
-                detalles as 'Detalles del Evento',
-                dispositivo as 'Dispositivo / Red'
+                timestamp as 'HORA',
+                fecha as 'FECHA',
+                usuario as 'USUARIO',
+                nombre_usuario as 'NOMBRE',
+                rol as 'ROL',
+                accion as 'ACCIÓN',
+                detalles as 'DETALLE OPERATIVO',
+                dispositivo as 'DISPOSITIVO'
             FROM sepam.logs_auditoria
             ORDER BY timestamp DESC;
         """).df()
 
-        # Escribir a Excel
-        with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
-            df_evento.to_excel(writer, sheet_name="Resumen_Evento", index=False)
-            df_atenciones.to_excel(writer, sheet_name="Atenciones_Clinicas", index=False)
-            df_logs.to_excel(writer, sheet_name="Bitacora_Auditoria", index=False)
+        df_resumen = con.execute("""
+            SELECT 
+                triage_color as 'CLASIFICACIÓN TRIAGE',
+                COUNT(*) as 'TOTAL PACIENTES',
+                ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM sepam.atenciones), 1) || '%' as 'PORCENTAJE'
+            FROM sepam.atenciones
+            GROUP BY triage_color
+            ORDER BY COUNT(*) DESC;
+        """).df()
 
-        return output_path
+        with pd.ExcelWriter(ruta_destino, engine='openpyxl') as writer:
+            df_resumen.to_excel(writer, sheet_name='Resumen General Triage', index=False)
+            df_atenciones.to_excel(writer, sheet_name='Atenciones de Campo', index=False)
+            df_logs.to_excel(writer, sheet_name='Bitácora de Auditoría', index=False)
+            
+        return ruta_destino
     finally:
         con.close()
 
-def generar_reporte_csv(output_path: str):
+def generar_reporte_csv(ruta_destino: str):
     con = get_duckdb_connection()
     try:
         df = con.execute("SELECT * FROM sepam.atenciones ORDER BY timestamp DESC;").df()
-        df.to_csv(output_path, index=False, encoding="utf-8-sig")
-        return output_path
+        df.to_csv(ruta_destino, index=False, encoding='utf-8-sig')
+        return ruta_destino
     finally:
         con.close()

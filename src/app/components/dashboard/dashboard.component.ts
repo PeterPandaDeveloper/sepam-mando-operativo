@@ -414,9 +414,11 @@ import { QuickEditModalComponent } from '../quick-edit-modal/quick-edit-modal.co
                 [style.color]="customizer.config().tema.colorTexto"
               >
                 <option value="TODOS">Todos los Estados</option>
-                <option value="EN_CONSULTA">En Atención</option>
+                <option value="EN_ATENCION">En Atención / Campo</option>
+                <option value="PENDIENTE_TRIAGE">Pendiente Triage</option>
+                <option value="EN_CONSULTA">En Consulta ACV / PMA</option>
                 <option value="TRASLADO_HOSPITALARIO">Traslado Hospitalario</option>
-                <option value="ALTA_IN_SITU">Alta en Terreno</option>
+                <option value="ALTA_IN_SITU">Altas (Terreno / Ambulancia)</option>
               </select>
             </div>
           </div>
@@ -518,6 +520,12 @@ export class DashboardComponent {
   atencionesFiltradas(): Atencion[] {
     const lista = this.emergency.atenciones();
     if (this.filtroEstadoSeleccionado === 'TODOS') return lista;
+    if (this.filtroEstadoSeleccionado === 'EN_ATENCION') {
+      return lista.filter(a => a.estado === 'EN_ATENCION' || a.estado === 'EN_CONSULTA' || a.estado === 'PENDIENTE_TRIAGE');
+    }
+    if (this.filtroEstadoSeleccionado === 'ALTA_IN_SITU') {
+      return lista.filter(a => a.estado === 'ALTA_IN_SITU' || a.estado === 'ALTA_AMBULANCIA' || a.estado === 'ALTA_ACV');
+    }
     return lista.filter(a => a.estado === this.filtroEstadoSeleccionado);
   }
 
