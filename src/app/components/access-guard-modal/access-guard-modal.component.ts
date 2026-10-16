@@ -119,12 +119,12 @@ import { AccessAuthService } from '../../services/access-auth.service';
               
               <!-- Botón Telegram Oficial -->
               <a 
-                href="https://t.me/share/url?url=https://sepam-mando-operativo.vercel.app&text=/key"
+                href="https://t.me/SEPAMando_Bot"
                 target="_blank"
                 class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-[#229ED9]/20 hover:bg-[#229ED9]/30 border border-[#229ED9]/50 text-[#71c5ec] text-xs font-bold transition-all"
               >
                 <span>✈️</span>
-                <span>Abrir Telegram</span>
+                <span>Bot @SEPAMando_Bot</span>
               </a>
 
               <!-- Botón Generar Clave (Para Directores / Demostración) -->

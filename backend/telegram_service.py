@@ -4,6 +4,7 @@ import time
 import random
 import string
 import uuid
+import html
 import threading
 import urllib.request
 import urllib.parse
@@ -19,7 +20,7 @@ init_db()
 logger = logging.getLogger("sepam.telegram")
 
 # Configuraciones principales
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8351502447:AAG3B880cK70r_u_bT4R01c1m7fKzF0example") # Reemplazable
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8900688872:AAFUDs8sH1y7flX6q-4wl5US_OBu0CIKYlg")
 TELEGRAM_ALLOWED_CHATS = os.getenv("TELEGRAM_ALLOWED_CHATS", "") # Opcional: IDs separados por coma
 MASTER_EMERGENCY_KEY = os.getenv("SEPAM_MASTER_KEY", "SEPAM-MASTER-2026!$%")
 DASHBOARD_URL = os.getenv("SEPAM_DASHBOARD_URL", "https://sepam-mando-operativo.vercel.app")
@@ -235,7 +236,7 @@ def listar_claves_vigentes() -> List[Dict[str, Any]]:
 
 class TelegramBot:
     def __init__(self, token: Optional[str] = None):
-        self.token = token or os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+        self.token = (token or TELEGRAM_BOT_TOKEN or "").strip()
         self.activo = False
         self.thread: Optional[threading.Thread] = None
         self.last_update_id = 0
@@ -245,8 +246,14 @@ class TelegramBot:
         if self.token and not self.activo:
             self.iniciar()
 
-    def enviar_mensaje(self, chat_id: int | str, texto: str, parse_mode: str = "Markdown") -> bool:
-        """Envía un mensaje a un chat de Telegram usando urllib.request nativo"""
+    def enviar_mensaje(
+        self,
+        chat_id: int | str,
+        texto: str,
+        parse_mode: str = "HTML",
+        reply_markup: Optional[Dict[str, Any]] = None
+    ) -> bool:
+        """Envía un mensaje a un chat de Telegram usando urllib.request nativo y HTML bulletproof"""
         if not self.token:
             return False
         url = f"https://api.telegram.org/bot{self.token}/sendMessage"
@@ -256,6 +263,8 @@ class TelegramBot:
             "parse_mode": parse_mode,
             "disable_web_page_preview": False
         }
+        if reply_markup:
+            payload["reply_markup"] = reply_markup
         try:
             req = urllib.request.Request(
                 url,
@@ -269,32 +278,76 @@ class TelegramBot:
             return False
 
     def procesar_actualizacion(self, update: Dict[str, Any]):
-        msg = update.get("message") or update.get("edited_message")
-        if not msg:
-            return
+        callback_query = update.get("callback_query")
+        if callback_query:
+            # Manejar pulsaciones de botones inline
+            cb_id = callback_query.get("id")
+            cb_msg = callback_query.get("message")
+            chat_id = cb_msg.get("chat", {}).get("id") if cb_msg else callback_query.get("from", {}).get("id")
+            user = callback_query.get("from", {})
+            username = html.escape(user.get("username") or user.get("first_name", "Usuario"))
+            data = callback_query.get("data", "")
 
-        chat_id = msg.get("chat", {}).get("id")
-        user = msg.get("from", {})
-        username = user.get("username") or user.get("first_name", "Usuario")
-        texto = (msg.get("text") or "").strip()
+            # Responder al callback para quitar el spinner de Telegram
+            try:
+                ans_url = f"https://api.telegram.org/bot{self.token}/answerCallbackQuery"
+                ans_req = urllib.request.Request(
+                    ans_url,
+                    data=json.dumps({"callback_query_id": cb_id}).encode("utf-8"),
+                    headers={"Content-Type": "application/json"}
+                )
+                urllib.request.urlopen(ans_req, timeout=5)
+            except Exception:
+                pass
 
-        if not chat_id or not texto:
-            return
+            if data == "btn_key":
+                comando = "/key"
+            elif data == "btn_estado":
+                comando = "/estado"
+            else:
+                comando = data
+            texto = comando
+        else:
+            msg = update.get("message") or update.get("edited_message")
+            if not msg:
+                return
 
-        comando = texto.split()[0].lower()
+            chat_id = msg.get("chat", {}).get("id")
+            user = msg.get("from", {})
+            username = html.escape(user.get("username") or user.get("first_name", "Usuario"))
+            texto = (msg.get("text") or "").strip()
+
+            if not chat_id or not texto:
+                return
+
+            partes = texto.split()
+            comando = partes[0].lower()
+
+            # Si el usuario abrió el link t.me/SEPAMando_Bot?start=key
+            if comando == "/start" and len(partes) > 1 and partes[1].lower() in ["key", "acceso", "clave"]:
+                comando = "/key"
 
         if comando in ["/start", "/ayuda", "/help"]:
             respuesta = (
-                "🚨 *SEPAM - SISTEMA DE MANDO OPERATIVO*\n"
-                "🛡️ *Control de Seguridad y Acceso Táctico (PMU)*\n\n"
-                f"Hola *{username}*, este bot genera claves de acceso temporal para proteger el Centro de Mando.\n\n"
-                "📋 *Comandos Rápidos:*\n"
-                "🔑 `/key` o `/acceso` - Generar clave de 2 horas\n"
-                "📊 `/estado` - Ver evento y claves activas\n"
-                "❓ `/ayuda` - Instrucciones de seguridad\n\n"
-                f"🌐 *Sitio Web:* {DASHBOARD_URL}"
+                "🚨 <b>SEPAM - SISTEMA DE MANDO OPERATIVO</b>\n"
+                "🛡️ <b>Control de Seguridad y Acceso Táctico (PMU)</b>\n\n"
+                f"Hola <b>{username}</b>, este es el bot oficial de seguridad de SEPAM Ecuador.\n\n"
+                "📋 <b>Comandos Rápidos:</b>\n"
+                "🔑 <code>/key</code> o <code>/acceso</code> - Generar clave temporal de 2 horas\n"
+                "📊 <code>/estado</code> - Ver evento y claves activas\n"
+                "❓ <code>/ayuda</code> - Instrucciones de seguridad\n\n"
+                f"🌐 <b>Centro de Mando:</b> <a href=\"{DASHBOARD_URL}\">{DASHBOARD_URL}</a>"
             )
-            self.enviar_mensaje(chat_id, respuesta)
+            markup = {
+                "inline_keyboard": [
+                    [{"text": "🔑 Generar Clave (2 Horas)", "callback_data": "btn_key"}],
+                    [
+                        {"text": "📊 Estado PMU", "callback_data": "btn_estado"},
+                        {"text": "🌐 Ir al Dashboard", "url": DASHBOARD_URL}
+                    ]
+                ]
+            }
+            self.enviar_mensaje(chat_id, respuesta, reply_markup=markup)
 
         elif comando in ["/key", "/acceso", "/generar", "/clave", "key", "acceso", "clave"]:
             # Generar la clave de 2 horas
@@ -308,21 +361,26 @@ class TelegramBot:
             link_directo = f"{DASHBOARD_URL}/?key={nueva_clave}"
 
             respuesta = (
-                "🔐 *CLAVE DE ACCESO TEMPORAL GENERADA (2 HORAS)*\n\n"
-                f"🔑 *Clave:* `{nueva_clave}`\n"
-                f"⏱️ *Duración:* 2 Horas (120 minutos)\n"
-                f"⏳ *Válida hasta:* *{info_clave['hora_expira']}* ({info_clave['fecha_expira']})\n\n"
-                f"🌐 *Acceso Directo con 1 Clic:*\n"
-                f"[Haz Clic Aquí para Entrar al Dashboard]({link_directo})\n\n"
-                "⚠️ *Importante:*\n"
-                "• Esta clave autoriza el control y manipulación de recursos en el Centro de Mando.\n"
-                "• Al vencer las 2 horas, la pantalla se bloqueará automáticamente.\n"
-                "• Vuelve a enviar `/key` cuando necesites renovarla."
+                "🔐 <b>CLAVE DE ACCESO TEMPORAL GENERADA (2 HORAS)</b>\n\n"
+                f"🔑 <b>Clave:</b> <code>{nueva_clave}</code>\n"
+                f"⏱️ <b>Duración:</b> 2 Horas (120 minutos)\n"
+                f"⏳ <b>Válida hasta:</b> <b>{info_clave['hora_expira']}</b> ({info_clave['fecha_expira']})\n\n"
+                f"🌐 <b>Acceso Directo con 1 Clic:</b>\n"
+                f"👉 <a href=\"{link_directo}\">Toca aquí para entrar directamente al Dashboard</a>\n\n"
+                "⚠️ <b>Instrucciones:</b>\n"
+                "• Toca la clave arriba para copiarla al portapapeles.\n"
+                "• O presiona el botón directo abajo para entrar sin escribir nada.\n"
+                "• Al vencer las 2 horas, la pantalla se bloqueará automáticamente."
             )
-            self.enviar_mensaje(chat_id, respuesta)
+            markup = {
+                "inline_keyboard": [
+                    [{"text": "🚀 Entrar al Dashboard Directo", "url": link_directo}],
+                    [{"text": "🔄 Generar Otra Clave", "callback_data": "btn_key"}]
+                ]
+            }
+            self.enviar_mensaje(chat_id, respuesta, reply_markup=markup)
 
         elif comando in ["/estado", "/status"]:
-            # Consultar evento y claves
             conn = get_connection()
             c = conn.cursor()
             c.execute("SELECT nombre, lugar, ciudad FROM evento LIMIT 1;")
@@ -331,32 +389,43 @@ class TelegramBot:
             tot_at = c.fetchone()[0]
             conn.close()
 
-            ev_nombre = ev[0] if ev else "Evento General"
+            ev_nombre = html.escape(ev[0]) if ev else "Evento General"
             claves_activas = listar_claves_vigentes()
 
             texto_claves = ""
             if claves_activas:
-                texto_claves = f"\n🔑 *Claves Activas:* {len(claves_activas)}\n"
+                texto_claves = f"\n🔑 <b>Claves Activas:</b> {len(claves_activas)}\n"
                 for k in claves_activas[:3]:
                     minutos = k.get("ttl_segundos", 0) // 60
-                    texto_claves += f"• `{k['clave']}` ({minutos}m restantes)\n"
+                    texto_claves += f"• <code>{k['clave']}</code> ({minutos}m restantes)\n"
             else:
-                texto_claves = "\n🔑 *Claves Activas:* Ninguna (Todo bloqueado)\n"
+                texto_claves = "\n🔑 <b>Claves Activas:</b> Ninguna (Todo bloqueado)\n"
 
             respuesta = (
-                "📊 *ESTADO DEL PUESTO DE MANDO (PMU)*\n\n"
-                f"🎪 *Evento:* {ev_nombre}\n"
-                f"🏥 *Atenciones en Registro:* {tot_at}\n"
-                f"⚡ *Redis NoSQL:* {'ONLINE' if redis_service.is_online() else 'OFFLINE'}\n"
+                "📊 <b>ESTADO DEL PUESTO DE MANDO (PMU)</b>\n\n"
+                f"🎪 <b>Evento:</b> {ev_nombre}\n"
+                f"🏥 <b>Atenciones Registradas:</b> {tot_at}\n"
+                f"⚡ <b>Redis NoSQL:</b> {'ONLINE' if redis_service.is_online() else 'OFFLINE'}\n"
                 f"{texto_claves}\n"
-                "👉 Genera una nueva clave con `/key`"
+                "👉 Genera una nueva clave con <code>/key</code> o el botón inferior:"
             )
-            self.enviar_mensaje(chat_id, respuesta)
+            markup = {
+                "inline_keyboard": [
+                    [{"text": "🔑 Generar Clave (2 Horas)", "callback_data": "btn_key"}],
+                    [{"text": "🌐 Ir al Dashboard", "url": DASHBOARD_URL}]
+                ]
+            }
+            self.enviar_mensaje(chat_id, respuesta, reply_markup=markup)
 
         else:
             self.enviar_mensaje(
                 chat_id,
-                "Comando no reconocido. Envía `/key` para generar tu clave de acceso de 2 horas o `/estado` para ver métricas."
+                "Comando no reconocido. Presiona abajo o escribe <code>/key</code> para generar tu clave de acceso de 2 horas:",
+                reply_markup={
+                    "inline_keyboard": [
+                        [{"text": "🔑 Generar Clave (2 Horas)", "callback_data": "btn_key"}]
+                    ]
+                }
             )
 
     def _loop_polling(self):
@@ -374,9 +443,9 @@ class TelegramBot:
                                 self.last_update_id = u["update_id"]
                                 self.procesar_actualizacion(u)
             except Exception as e:
-                # Evitar saturación si hay error de red o token inválido
+                logger.warning("Error en polling de Telegram: %s", e)
                 time.sleep(5)
-            time.sleep(1)
+            time.sleep(0.5)
 
     def iniciar(self):
         if not self.token or self.token.endswith("example"):
