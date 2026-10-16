@@ -1,4 +1,5 @@
-import { Injectable, signal, effect } from '@angular/core';
+import { Injectable, signal, effect, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
 export interface ThemeConfig {
   nombrePreset: string;
@@ -14,12 +15,33 @@ export interface ThemeConfig {
   colorTextoSecundario: string;
 }
 
+export type VisualType = 
+  | 'grafico_dona' 
+  | 'grafico_barras' 
+  | 'curva_tendencia' 
+  | 'gauge_radial' 
+  | 'tarjeta_kpi' 
+  | 'texto_markdown';
+
+export type VisualDataSource = 
+  | 'triage_distribucion' 
+  | 'sectores_atenciones' 
+  | 'capacidad_camillas' 
+  | 'curva_horaria' 
+  | 'motivos_clinicos' 
+  | 'aforo_ocupacion' 
+  | 'manual';
+
 export interface CustomWidget {
   id: string;
   titulo: string;
   contenido: string;
   colorBorde: string;
   icono: string;
+  visualType?: VisualType;
+  dataSource?: VisualDataSource;
+  colSpan?: 1 | 2 | 3; // 1 = 1 Columna (33%), 2 = 2 Columnas (66%), 3 = Ancho Completo (100%)
+  orden?: number;
 }
 
 export interface DynamicKpi {
@@ -61,7 +83,20 @@ export interface AppConfig {
   providedIn: 'root'
 })
 export class CustomizerService {
-  
+  private http = inject(HttpClient);
+
+  private get baseUrl(): string {
+    if (typeof window !== 'undefined') {
+      if (window.location.protocol === 'capacitor:' || window.location.protocol === 'file:') {
+        return 'https://sepam-mando-operativo.vercel.app';
+      }
+      if (window.location.port === '4200') {
+        return `http://${window.location.hostname}:8000`;
+      }
+    }
+    return '';
+  }
+
   // 7 Presets profesionales preconfigurados
   presets: Record<string, ThemeConfig> = {
     'beige-verde': {
@@ -202,6 +237,60 @@ export class CustomizerService {
     }
   ];
 
+  // Widgets visuales iniciales estilo Power BI (Gráficas interactivas, medidores y notas)
+  widgetsPorDefecto: CustomWidget[] = [
+    {
+      id: 'w-triage-donut',
+      titulo: 'Distribución de Triage START',
+      contenido: 'Proporción y volumen en vivo por código de gravedad',
+      colorBorde: '#07483b',
+      icono: '🍩',
+      visualType: 'grafico_dona',
+      dataSource: 'triage_distribucion',
+      colSpan: 1
+    },
+    {
+      id: 'w-sector-bars',
+      titulo: 'Atenciones por Sector / Zona',
+      contenido: 'Comparativa de emergencias registradas en cada zona',
+      colorBorde: '#f59e0b',
+      icono: '📊',
+      visualType: 'grafico_barras',
+      dataSource: 'sectores_atenciones',
+      colSpan: 1
+    },
+    {
+      id: 'w-hourly-spark',
+      titulo: 'Curva Horaria de Ingresos',
+      contenido: 'Tendencia temporal de atenciones durante el concierto',
+      colorBorde: '#0284c7',
+      icono: '📈',
+      visualType: 'curva_tendencia',
+      dataSource: 'curva_horaria',
+      colSpan: 1
+    },
+    {
+      id: 'w-beds-gauge',
+      titulo: 'Capacidad de Camillas ACV 1 y 2',
+      contenido: 'Saturación en tiempo real de los Puestos Médicos Avanzados',
+      colorBorde: '#10b981',
+      icono: '🎯',
+      visualType: 'gauge_radial',
+      dataSource: 'capacidad_camillas',
+      colSpan: 1
+    },
+    {
+      id: 'w-consigna',
+      titulo: 'Consigna Operativa del Mando (PMU)',
+      contenido: '🚨 PROTOCOLO OPERATIVO ACTIVO:\n• Prioridad Alfa en ZONA C (Foso y Escenario).\n• Despacho de ambulancia ALFA-01 exclusivo para ACV 1.\n• Reporte de signos vitales cada 15 min.',
+      colorBorde: '#07483b',
+      icono: '📝',
+      visualType: 'texto_markdown',
+      dataSource: 'manual',
+      colSpan: 2
+    }
+  ];
+
   config = signal<AppConfig>({
     tema: { ...this.presets['beige-verde'] },
     textos: {
@@ -221,50 +310,8 @@ export class CustomizerService {
       tablaActividad: true,
       graficaTriage: true
     },
-    kpis: [
-      {
-        id: 'kpi-personal',
-        titulo: 'PERSONAL OPERATIVO',
-        badgeTexto: 'LIVE',
-        badgeColor: 'emerald',
-        tipoValor: 'metrica_personal',
-        subtitulo1: 'disponibles',
-        subtitulo2: 'en atención',
-        colorValor: '#07483b'
-      },
-      {
-        id: 'kpi-atenciones',
-        titulo: 'ATENCIONES ACTIVAS',
-        badgeTexto: 'EN TERRENO',
-        badgeColor: 'amber',
-        tipoValor: 'metrica_atenciones',
-        subtitulo1: 'Registradas en vivo',
-        subtitulo2: 'Atendidas en campo',
-        colorValor: '#f59e0b'
-      },
-      {
-        id: 'kpi-traslados',
-        titulo: 'TRASLADOS AL ACV',
-        badgeTexto: 'RUMBO ACV',
-        badgeColor: 'cyan',
-        tipoValor: 'metrica_traslados',
-        subtitulo1: 'Camilla / Ambulancia',
-        subtitulo2: 'Derivados a PMA',
-        colorValor: '#06b6d4'
-      },
-      {
-        id: 'kpi-apoyos',
-        titulo: 'APOYOS SOLICITADOS',
-        badgeTexto: 'RADIAL',
-        badgeColor: 'purple',
-        tipoValor: 'manual',
-        valorManual: '00',
-        subtitulo1: 'Sin novedades',
-        subtitulo2: '0 Solicitudes',
-        colorValor: '#8b5cf6'
-      }
-    ],
-    recuadrosPersonalizados: []
+    kpis: [...this.kpisPorDefecto],
+    recuadrosPersonalizados: [...this.widgetsPorDefecto]
   });
 
   // Estado del menú flotante izquierdo
@@ -277,6 +324,9 @@ export class CustomizerService {
     effect(() => {
       this.aplicarVariablesCSS(this.config().tema);
     });
+
+    // Cargar sincronización desde servidor si está disponible
+    this.cargarDesdeServidor();
   }
 
   toggleSidebar() {
@@ -299,6 +349,7 @@ export class CustomizerService {
         tema: { ...preset }
       }));
       this.guardarEnLocalStorage();
+      this.guardarEnServidor();
     }
   }
 
@@ -311,6 +362,7 @@ export class CustomizerService {
       }
     }));
     this.guardarEnLocalStorage();
+    this.guardarEnServidor();
   }
 
   actualizarTexto(campo: keyof AppConfig['textos'], nuevoValor: string) {
@@ -322,6 +374,7 @@ export class CustomizerService {
       }
     }));
     this.guardarEnLocalStorage();
+    this.guardarEnServidor();
   }
 
   toggleVisibilidad(seccion: keyof AppConfig['visibilidad']) {
@@ -333,21 +386,44 @@ export class CustomizerService {
       }
     }));
     this.guardarEnLocalStorage();
+    this.guardarEnServidor();
   }
 
-  agregarRecuadroPersonalizado(titulo: string, contenido: string, icono: string = '📌') {
+  // --- MÉTODOS DEL VISUAL BUILDER (Power BI / Grafana) ---
+
+  agregarRecuadroPersonalizado(
+    titulo: string, 
+    contenido: string, 
+    icono: string = '📌',
+    visualType: VisualType = 'texto_markdown',
+    dataSource: VisualDataSource = 'manual',
+    colSpan: 1 | 2 | 3 = 1
+  ) {
     const nuevo: CustomWidget = {
       id: `w-${Date.now().toString(36)}`,
       titulo,
       contenido,
       colorBorde: this.config().tema.colorPrimario,
-      icono
+      icono,
+      visualType,
+      dataSource,
+      colSpan
     };
     this.config.update(c => ({
       ...c,
       recuadrosPersonalizados: [...c.recuadrosPersonalizados, nuevo]
     }));
     this.guardarEnLocalStorage();
+    this.guardarEnServidor();
+  }
+
+  editarRecuadroPersonalizado(id: string, cambios: Partial<CustomWidget>) {
+    this.config.update(c => ({
+      ...c,
+      recuadrosPersonalizados: c.recuadrosPersonalizados.map(w => w.id === id ? { ...w, ...cambios } : w)
+    }));
+    this.guardarEnLocalStorage();
+    this.guardarEnServidor();
   }
 
   eliminarRecuadroPersonalizado(id: string) {
@@ -356,9 +432,38 @@ export class CustomizerService {
       recuadrosPersonalizados: c.recuadrosPersonalizados.filter(w => w.id !== id)
     }));
     this.guardarEnLocalStorage();
+    this.guardarEnServidor();
   }
 
-  // Métodos dinámicos para Gestión de KPIs (Agregar, Editar, Eliminar)
+  moverWidget(id: string, direccion: 'arriba' | 'abajo') {
+    const widgets = [...this.config().recuadrosPersonalizados];
+    const index = widgets.findIndex(w => w.id === id);
+    if (index === -1) return;
+
+    if (direccion === 'arriba' && index > 0) {
+      const temp = widgets[index];
+      widgets[index] = widgets[index - 1];
+      widgets[index - 1] = temp;
+    } else if (direccion === 'abajo' && index < widgets.length - 1) {
+      const temp = widgets[index];
+      widgets[index] = widgets[index + 1];
+      widgets[index + 1] = temp;
+    }
+
+    this.config.update(c => ({
+      ...c,
+      recuadrosPersonalizados: widgets
+    }));
+    this.guardarEnLocalStorage();
+    this.guardarEnServidor();
+  }
+
+  cambiarColSpan(id: string, colSpan: 1 | 2 | 3) {
+    this.editarRecuadroPersonalizado(id, { colSpan });
+  }
+
+  // --- MÉTODOS PARA GESTIÓN DE KPIS ---
+
   agregarKpi(kpi: Omit<DynamicKpi, 'id'>) {
     const id = `kpi-${Date.now().toString(36)}`;
     const nuevo: DynamicKpi = { ...kpi, id };
@@ -367,6 +472,7 @@ export class CustomizerService {
       kpis: [...(c.kpis || []), nuevo]
     }));
     this.guardarEnLocalStorage();
+    this.guardarEnServidor();
   }
 
   editarKpi(id: string, cambios: Partial<DynamicKpi>) {
@@ -375,6 +481,7 @@ export class CustomizerService {
       kpis: (c.kpis || []).map(k => k.id === id ? { ...k, ...cambios } : k)
     }));
     this.guardarEnLocalStorage();
+    this.guardarEnServidor();
   }
 
   eliminarKpi(id: string) {
@@ -383,14 +490,47 @@ export class CustomizerService {
       kpis: (c.kpis || []).filter(k => k.id !== id)
     }));
     this.guardarEnLocalStorage();
+    this.guardarEnServidor();
   }
+
+  // --- PERSISTENCIA HÍBRIDA (LOCAL + SERVIDOR MULTI-PANTALLA) ---
 
   guardarEnLocalStorage() {
     try {
       localStorage.setItem('sepam_app_custom_config', JSON.stringify(this.config()));
     } catch (e) {
-      console.error('Error al guardar configuración:', e);
+      console.error('Error al guardar configuración local:', e);
     }
+  }
+
+  guardarEnServidor() {
+    try {
+      this.http.post(`${this.baseUrl}/api/config-ui`, {
+        config: this.config(),
+        usuario: 'Super Usuario PMU'
+      }).subscribe({
+        next: () => {},
+        error: () => {}
+      });
+    } catch {}
+  }
+
+  cargarDesdeServidor() {
+    try {
+      this.http.get<AppConfig | null>(`${this.baseUrl}/api/config-ui`).subscribe({
+        next: (serverConfig) => {
+          if (serverConfig && serverConfig.tema) {
+            // Unir widgets predeterminados si faltan
+            if (!serverConfig.recuadrosPersonalizados || serverConfig.recuadrosPersonalizados.length === 0) {
+              serverConfig.recuadrosPersonalizados = [...this.widgetsPorDefecto];
+            }
+            this.config.set(serverConfig);
+            this.guardarEnLocalStorage();
+          }
+        },
+        error: () => {}
+      });
+    } catch {}
   }
 
   restaurarPorDefecto() {
@@ -414,9 +554,10 @@ export class CustomizerService {
         graficaTriage: true
       },
       kpis: [...this.kpisPorDefecto],
-      recuadrosPersonalizados: []
+      recuadrosPersonalizados: [...this.widgetsPorDefecto]
     });
     localStorage.removeItem('sepam_app_custom_config');
+    this.guardarEnServidor();
   }
 
   private cargarConfiguracionGuardada() {
@@ -424,10 +565,8 @@ export class CustomizerService {
       const guardada = localStorage.getItem('sepam_app_custom_config');
       if (guardada) {
         const parsed = JSON.parse(guardada);
-        if (parsed.recuadrosPersonalizados) {
-          parsed.recuadrosPersonalizados = parsed.recuadrosPersonalizados.filter(
-            (w: CustomWidget) => w.id !== 'widget-1'
-          );
+        if (!parsed.recuadrosPersonalizados || parsed.recuadrosPersonalizados.length === 0) {
+          parsed.recuadrosPersonalizados = [...this.widgetsPorDefecto];
         }
         if (!parsed.kpis || parsed.kpis.length === 0) {
           parsed.kpis = [...this.kpisPorDefecto];
@@ -452,7 +591,6 @@ export class CustomizerService {
       root.style.setProperty('--text-primary', tema.colorTexto);
       root.style.setProperty('--text-secondary', tema.colorTextoSecundario);
 
-      // Aplicar al body directamente para que el 100% de la ventana responda
       document.body.style.backgroundColor = tema.colorFondo;
       document.body.style.color = tema.colorTexto;
     }

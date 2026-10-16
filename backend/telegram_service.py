@@ -19,8 +19,27 @@ init_db()
 
 logger = logging.getLogger("sepam.telegram")
 
-# Configuraciones principales
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8900688872:AAFUDs8sH1y7flX6q-4wl5US_OBu0CIKYlg")
+# Cargar automáticamente variables de .env si existe
+def _cargar_env():
+    for p in [
+        os.path.join(os.path.dirname(__file__), ".env"),
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+    ]:
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            k, v = line.split("=", 1)
+                            os.environ.setdefault(k.strip(), v.strip())
+            except Exception:
+                pass
+
+_cargar_env()
+
+# Configuraciones principales (priorizan variables de entorno / .env)
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip() or "8900688872:AAFUDs8sH1y7flX6q-4wl5US_OBu0CIKYlg"
 TELEGRAM_ALLOWED_CHATS = os.getenv("TELEGRAM_ALLOWED_CHATS", "") # Opcional: IDs separados por coma
 MASTER_EMERGENCY_KEY = os.getenv("SEPAM_MASTER_KEY", "SEPAM-MASTER-2026!$%")
 DASHBOARD_URL = os.getenv("SEPAM_DASHBOARD_URL", "https://sepam-mando-operativo.vercel.app")

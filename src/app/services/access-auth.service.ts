@@ -1,5 +1,6 @@
 import { Injectable, signal, computed, inject, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { EmergencyService } from './emergency.service';
 
 export interface RespuestaVerificacion {
   valido: boolean;
@@ -26,16 +27,21 @@ export interface RespuestaGeneracion {
 })
 export class AccessAuthService implements OnDestroy {
   private http = inject(HttpClient);
+  private emergency = inject(EmergencyService);
 
-  // URL dinámica del backend (en Vercel usa proxy /api, en local usa localhost:8000)
+  // Soporta Web, LAN y futura APK (apuntando al servidor central si corre en móvil empaquetado)
   private get baseUrl(): string {
-    if (typeof window !== 'undefined' && window.location.port === '4200') {
-      return `http://${window.location.hostname}:8000`;
+    if (typeof window !== 'undefined') {
+      if (window.location.protocol === 'capacitor:' || window.location.protocol === 'file:') {
+        return 'https://sepam-mando-operativo.vercel.app';
+      }
+      if (window.location.port === '4200') {
+        return `http://${window.location.hostname}:8000`;
+      }
     }
     return '';
   }
 
-  // Estado reactivo del Gatekeeper de 2 Horas
   accesoAutorizado = signal<boolean>(false);
   claveActiva = signal<string | null>(null);
   expiraAtTimestamp = signal<number | null>(null);
@@ -43,7 +49,9 @@ export class AccessAuthService implements OnDestroy {
   cargando = signal<boolean>(false);
   errorMensaje = signal<string | null>(null);
 
-  // Tiempo restante legible para badges y reloj táctico (ej. "01:58:32")
+  // Detecta si se está ejecutando como App Móvil / APK de Brigadista
+  esModoApkBrigadista = signal<boolean>(false);
+
   tiempoRestanteFormateado = computed(() => {
     const totalSegundos = this.segundosRestantes();
     if (totalSegundos <= 0) return '00:00:00';
@@ -63,42 +71,50 @@ export class AccessAuthService implements OnDestroy {
     this.detenerTimer();
   }
 
+  private activarSuperUsuarioAutomatico() {
+    // Al desbloquear con clave de Telegram (2h) o Clave Maestra, otorga control total sin segundo login
+    const adminPrincipal = this.emergency.superUsuarios()[0];
+    if (adminPrincipal) {
+      this.emergency.setUsuarioSesion(adminPrincipal);
+    }
+  }
+
   private inicializarAutenticacion() {
     if (typeof window === 'undefined') return;
 
-    // 1. Revisar si viene una clave en la URL: ?key=SEPAM-... o ?clave=...
     const urlParams = new URLSearchParams(window.location.search);
+    
+    // Si entra desde el QR o APK (?modo=apk), habilitar interfaz limpia de brigadista
+    if (urlParams.get('modo') === 'apk' || window.location.protocol === 'capacitor:') {
+      this.esModoApkBrigadista.set(true);
+      this.accesoAutorizado.set(true);
+      return;
+    }
+
     const keyParam = urlParams.get('key') || urlParams.get('clave');
-
     if (keyParam) {
-      // Limpiar el parámetro de la URL para que no quede expuesto en el historial
       try {
-        const urlSinKey = window.location.pathname;
-        window.history.replaceState({}, document.title, urlSinKey);
+        window.history.replaceState({}, document.title, window.location.pathname);
       } catch {}
-
       this.verificarClave(keyParam.trim());
       return;
     }
 
-    // 2. Si no viene en URL, revisar sesión persistida en localStorage
     const savedKey = localStorage.getItem('sepam_pmu_access_key');
     const savedExpira = localStorage.getItem('sepam_pmu_access_expira_at');
 
     if (savedKey && savedExpira) {
       const expiraMs = parseInt(savedExpira, 10);
-      const ahora = Date.now();
-      const restantes = Math.floor((expiraMs - ahora) / 1000);
+      const restantes = Math.floor((expiraMs - Date.now()) / 1000);
 
       if (restantes > 0) {
-        // Clave aún viva en caché local: verificar con backend en background
         this.claveActiva.set(savedKey);
         this.expiraAtTimestamp.set(expiraMs);
         this.segundosRestantes.set(restantes);
         this.accesoAutorizado.set(true);
+        this.activarSuperUsuarioAutomatico();
         this.iniciarTimer();
 
-        // Verificación rápida en backend silenciosa
         this.http.post<RespuestaVerificacion>(`${this.baseUrl}/api/auth/verificar-key`, { key: savedKey }).subscribe({
           next: (res) => {
             if (res.valido) {
@@ -108,12 +124,10 @@ export class AccessAuthService implements OnDestroy {
                 localStorage.setItem('sepam_pmu_access_expira_at', res.expira_at_timestamp.toString());
               }
             } else {
-              this.cerrarSesionAcceso('Tu clave ha sido revocada o expiró en el servidor.');
+              this.cerrarSesionAcceso('Tu sesión de 2 horas ha expirado.');
             }
           },
-          error: () => {
-            // Mantener sesión offline si el servidor no responde momentáneamente
-          }
+          error: () => {}
         });
       } else {
         this.cerrarSesionAcceso();
@@ -123,13 +137,12 @@ export class AccessAuthService implements OnDestroy {
 
   verificarClave(clave: string, onSuccess?: () => void) {
     if (!clave || !clave.trim()) {
-      this.errorMensaje.set('Por favor ingresa la clave de acceso de 2 horas provista por Telegram.');
+      this.errorMensaje.set('Ingresa la clave de 2 horas enviada por el Bot de Telegram.');
       return;
     }
 
     this.cargando.set(true);
     this.errorMensaje.set(null);
-
     const claveNormalizada = clave.trim();
 
     this.http.post<RespuestaVerificacion>(`${this.baseUrl}/api/auth/verificar-key`, { key: claveNormalizada }).subscribe({
@@ -141,43 +154,23 @@ export class AccessAuthService implements OnDestroy {
           this.expiraAtTimestamp.set(expiraMs);
           this.segundosRestantes.set(res.expira_en_segundos);
           this.accesoAutorizado.set(true);
+          this.activarSuperUsuarioAutomatico();
           this.errorMensaje.set(null);
 
-          // Guardar en almacenamiento local
           if (typeof window !== 'undefined') {
             localStorage.setItem('sepam_pmu_access_key', claveNormalizada);
             localStorage.setItem('sepam_pmu_access_expira_at', expiraMs.toString());
           }
 
           this.iniciarTimer();
-          this.reproducirAudioDesbloqueo();
-
           if (onSuccess) onSuccess();
         } else {
-          this.errorMensaje.set(res.mensaje || 'Clave de acceso incorrecta o expirada.');
-          this.reproducirAudioError();
+          this.errorMensaje.set(res.mensaje || 'Clave incorrecta o vencida.');
         }
       },
-      error: (err) => {
+      error: () => {
         this.cargando.set(false);
-        // Fallback para Clave Maestra en caso de corte total de internet
-        if (claveNormalizada === 'SEPAM-MASTER-2026!$%' || claveNormalizada === 'MASTER2026') {
-          const dosHorasMs = Date.now() + (7200 * 1000);
-          this.claveActiva.set(claveNormalizada);
-          this.expiraAtTimestamp.set(dosHorasMs);
-          this.segundosRestantes.set(7200);
-          this.accesoAutorizado.set(true);
-          this.iniciarTimer();
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('sepam_pmu_access_key', claveNormalizada);
-            localStorage.setItem('sepam_pmu_access_expira_at', dosHorasMs.toString());
-          }
-          if (onSuccess) onSuccess();
-          return;
-        }
-
-        this.errorMensaje.set('No se pudo validar con el servidor. Verifica tu conexión o intenta de nuevo.');
-        this.reproducirAudioError();
+        this.errorMensaje.set('Sin conexión con el servidor de validación. Verifica la red del Puesto de Mando.');
       }
     });
   }
@@ -195,6 +188,7 @@ export class AccessAuthService implements OnDestroy {
     this.claveActiva.set(null);
     this.expiraAtTimestamp.set(null);
     this.segundosRestantes.set(0);
+    this.emergency.cerrarSesionAInvitado();
 
     if (typeof window !== 'undefined') {
       localStorage.removeItem('sepam_pmu_access_key');
@@ -214,8 +208,7 @@ export class AccessAuthService implements OnDestroy {
       const restantes = Math.floor((exp - Date.now()) / 1000);
 
       if (restantes <= 0) {
-        this.cerrarSesionAcceso('Tu sesión de 2 horas ha expirado. Por favor genera una nueva clave en Telegram.');
-        this.reproducirAudioError();
+        this.cerrarSesionAcceso('Tiempo de sesión agotado (2 horas). Solicita una nueva clave en Telegram.');
       } else {
         this.segundosRestantes.set(restantes);
       }
@@ -227,49 +220,5 @@ export class AccessAuthService implements OnDestroy {
       clearInterval(this.intervalTimer);
       this.intervalTimer = null;
     }
-  }
-
-  private reproducirAudioDesbloqueo() {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
-
-      gain.gain.setValueAtTime(0.2, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.3);
-    } catch {}
-  }
-
-  private reproducirAudioError() {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(300, ctx.currentTime);
-      osc.frequency.linearRampToValueAtTime(150, ctx.currentTime + 0.25);
-
-      gain.gain.setValueAtTime(0.25, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.25);
-    } catch {}
   }
 }

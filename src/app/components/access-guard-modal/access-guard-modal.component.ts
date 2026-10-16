@@ -124,25 +124,24 @@ import { AccessAuthService } from '../../services/access-auth.service';
                 class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-[#229ED9]/20 hover:bg-[#229ED9]/30 border border-[#229ED9]/50 text-[#71c5ec] text-xs font-bold transition-all"
               >
                 <span>✈️</span>
-                <span>Bot @SEPAMando_Bot</span>
+                <span>Pedir Clave en Telegram</span>
               </a>
 
-              <!-- Botón Generar Clave (Para Directores / Demostración) -->
+              <!-- Botón Acceso Director por PIN Maestro -->
               <button 
-                (click)="generarClaveRapida()"
-                [disabled]="generandoDemo()"
+                (click)="solicitarPinDirector()"
                 class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-xs font-bold cursor-pointer transition-all"
-                title="Generar clave instantánea de 2 horas desde el servidor"
+                title="Acceso de contingencia para Directores de Operaciones con PIN"
               >
-                <span>⚡</span>
-                <span>{{ generandoDemo() ? 'Generando...' : 'Generar Clave (2h)' }}</span>
+                <span>🛡️</span>
+                <span>Dirección (PIN Maestro)</span>
               </button>
 
             </div>
 
             <!-- Ayuda Clave Maestra -->
             <p class="text-[10px] text-slate-400 mt-1 font-mono">
-              * En situaciones sin conexión: La Dirección Médica dispone de la Clave Maestra de Contingencia.
+              * En situaciones sin conexión: La Dirección Médica dispone del PIN de Contingencia.
             </p>
 
           </div>
@@ -170,10 +169,8 @@ import { AccessAuthService } from '../../services/access-auth.service';
 export class AccessGuardModalComponent implements OnInit {
   auth = inject(AccessAuthService);
   claveIngresada = '';
-  generandoDemo = signal(false);
 
   ngOnInit() {
-    // Si ya existe clave activa, rellenar
     if (this.auth.claveActiva()) {
       this.claveIngresada = this.auth.claveActiva()!;
     }
@@ -194,21 +191,13 @@ export class AccessGuardModalComponent implements OnInit {
     }
   }
 
-  generarClaveRapida() {
-    this.generandoDemo.set(true);
-    this.auth.generarClaveEmergencia('Simulador / Panel de Acceso').subscribe({
-      next: (res) => {
-        this.generandoDemo.set(false);
-        this.claveIngresada = res.clave;
-        // Auto verificar de inmediato
-        this.auth.verificarClave(res.clave);
-      },
-      error: () => {
-        this.generandoDemo.set(false);
-        // Fallback local
-        this.claveIngresada = 'SEPAM-MASTER-2026!$%';
-        this.auth.verificarClave(this.claveIngresada);
-      }
-    });
+  solicitarPinDirector() {
+    const pin = prompt('🔒 CONTROL DE SEGURIDAD PMU:\nIngresa el PIN de la Dirección de Operaciones:');
+    if (pin && pin.trim() === '2026') {
+      this.claveIngresada = 'SEPAM-MASTER-2026!$%';
+      this.auth.verificarClave(this.claveIngresada);
+    } else if (pin !== null) {
+      alert('❌ PIN Incorrecto. Solicita tu clave temporal al Bot de Telegram @SEPAMando_Bot.');
+    }
   }
 }

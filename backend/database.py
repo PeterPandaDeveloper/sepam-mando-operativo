@@ -83,6 +83,16 @@ def init_db():
     );
     """)
 
+    # 5. Tabla de Configuración de Interfaz y Diseño Power BI
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS configuracion_ui (
+        id TEXT PRIMARY KEY,
+        config_json TEXT NOT NULL,
+        actualizado_en TEXT NOT NULL,
+        actualizado_por TEXT NOT NULL
+    );
+    """)
+
     # Poblar con datos iniciales si la tabla de eventos está vacía
     cursor.execute("SELECT COUNT(*) FROM evento;")
     if cursor.fetchone()[0] == 0:

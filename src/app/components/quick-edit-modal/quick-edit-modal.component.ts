@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EmergencyService } from '../../services/emergency.service';
-import { CustomizerService, DynamicKpi } from '../../services/customizer.service';
+import { CustomizerService, DynamicKpi, VisualType, VisualDataSource } from '../../services/customizer.service';
 import { Sector } from '../../models/emergency.model';
 
 export type EditItemType = 'evento' | 'kpi' | 'nuevo_kpi' | 'sector' | 'nuevo_sector' | 'widget' | 'header';
@@ -31,10 +31,13 @@ export interface QuickEditData {
   kpiSubtitulo1?: string;
   kpiSubtitulo2?: string;
   kpiColorValor?: string;
-  // Campos para Widget
+  // Campos para Widget Visual Builder (Power BI)
   widgetTitulo?: string;
   widgetContenido?: string;
   widgetIcono?: string;
+  widgetVisualType?: VisualType;
+  widgetDataSource?: VisualDataSource;
+  widgetColSpan?: 1 | 2 | 3;
   // Campos para Header
   headerNombre?: string;
   headerSubtitulo?: string;
@@ -49,7 +52,7 @@ export interface QuickEditData {
       <div class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fadeIn">
         <div class="bg-white border-2 border-[#07483b] rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl text-[#0d2822]">
           
-          <!-- Header del Modal con SVG Nítido (Sin emojis) -->
+          <!-- Header del Modal con SVG Nítido -->
           <div class="p-4 border-b border-[#05372d] bg-[#07483b] text-white flex items-center justify-between">
             <div class="flex items-center gap-2.5">
               <div class="w-8 h-8 rounded-lg bg-amber-400 flex items-center justify-center text-slate-900 shadow-xs">
@@ -65,7 +68,7 @@ export interface QuickEditData {
               </div>
               <div>
                 <h3 class="text-sm font-black tracking-wide">{{ datos.tituloModal }}</h3>
-                <p class="text-[11px] text-emerald-200">Configuración dinámica en tiempo real • Modo Super Usuario</p>
+                <p class="text-[11px] text-emerald-200">Configuración analítica y visual • Modo Super Usuario</p>
               </div>
             </div>
             <button (click)="cerrar()" class="text-emerald-100 hover:text-white p-1.5 text-lg font-bold cursor-pointer" title="Cerrar ventana">✕</button>
@@ -100,7 +103,7 @@ export interface QuickEditData {
                   </div>
                   <div>
                     <label class="block font-bold text-[#07483b] mb-1">Nivel de Riesgo:</label>
-                    <select [(ngModel)]="datos.nivelRiesgo" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white font-bold text-red-700">
+                    <select [(ngModel)]="datos.nivelRiesgo" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white font-bold">
                       <option value="Bajo">Bajo</option>
                       <option value="Medio">Medio</option>
                       <option value="Alto">Alto</option>
@@ -111,7 +114,7 @@ export interface QuickEditData {
 
                 <div>
                   <label class="block font-bold text-[#07483b] mb-1">Aforo Estimado:</label>
-                  <input type="text" [(ngModel)]="datos.aforoTexto" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white font-mono" placeholder="~28,000 pers." />
+                  <input type="text" [(ngModel)]="datos.aforoTexto" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white font-mono" placeholder="Ej: ~28,000 pers." />
                 </div>
               </div>
             }
@@ -120,94 +123,119 @@ export interface QuickEditData {
             @if (datos.tipo === 'kpi' || datos.tipo === 'nuevo_kpi') {
               <div class="space-y-3">
                 <div>
-                  <label class="block font-bold text-[#07483b] mb-1">Título del KPI (Tarjeta de Indicador):</label>
-                  <input type="text" [(ngModel)]="datos.kpiTitulo" class="w-full p-2.5 rounded-lg border border-[#d2dfd8] bg-white font-black uppercase text-[#0d2822]" placeholder="Ej: EVACUACIONES MÉDICAS" />
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                  <div>
-                    <label class="block font-bold text-[#07483b] mb-1">Origen del Valor:</label>
-                    <select [(ngModel)]="datos.kpiTipoValor" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white font-bold text-[#07483b]">
-                      <option value="metrica_personal">Personal Operativo Total</option>
-                      <option value="metrica_atenciones">Atenciones Activas en Vivo</option>
-                      <option value="metrica_traslados">Traslados Activos al ACV</option>
-                      <option value="metrica_ambulancias">Ambulancias en Servicio</option>
-                      <option value="manual">Valor Fijo / Manual</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block font-bold text-[#07483b] mb-1">Valor Manual (si aplica):</label>
-                    <input type="text" [(ngModel)]="datos.kpiValorManual" [disabled]="datos.kpiTipoValor !== 'manual'" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white font-black font-mono" placeholder="00 o 99%" />
-                  </div>
+                  <label class="block font-bold text-[#07483b] mb-1">Título del Indicador (KPI):</label>
+                  <input type="text" [(ngModel)]="datos.kpiTitulo" class="w-full p-2.5 rounded-lg border border-[#d2dfd8] bg-white font-bold uppercase" placeholder="Ej: PACIENTES ATENDIDOS" />
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label class="block font-bold text-[#07483b] mb-1">Texto del Distintivo (Badge):</label>
-                    <input type="text" [(ngModel)]="datos.kpiBadgeTexto" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white font-bold uppercase" placeholder="Ej: LIVE / CRÍTICO" />
+                    <input type="text" [(ngModel)]="datos.kpiBadgeTexto" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white font-bold uppercase" placeholder="Ej: EN VIVO" />
                   </div>
                   <div>
                     <label class="block font-bold text-[#07483b] mb-1">Color del Distintivo:</label>
                     <select [(ngModel)]="datos.kpiBadgeColor" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white font-bold">
-                      <option value="emerald">🟢 Verde (Normal / Live)</option>
-                      <option value="amber">🟡 Amarillo (Alerta / Terreno)</option>
-                      <option value="cyan">🔵 Celeste (PMA / Traslado)</option>
-                      <option value="red">🔴 Rojo (Urgente / Crítico)</option>
-                      <option value="purple">🟣 Púrpura (Comunicaciones)</option>
+                      <option value="emerald">Verde (Operativo)</option>
+                      <option value="amber">Ámbar (Alerta)</option>
+                      <option value="cyan">Cian (Traslado)</option>
+                      <option value="red">Rojo (Crítico)</option>
+                      <option value="purple">Púrpura (Especial)</option>
                     </select>
                   </div>
                 </div>
 
+                <div>
+                  <label class="block font-bold text-[#07483b] mb-1">Tipo de Medición / Fuente de Datos:</label>
+                  <select [(ngModel)]="datos.kpiTipoValor" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white font-bold">
+                    <option value="metrica_atenciones">Atenciones en Terreno (Automático)</option>
+                    <option value="metrica_personal">Personal Total Disponible (Automático)</option>
+                    <option value="metrica_traslados">Pacientes Rumbo al ACV (Automático)</option>
+                    <option value="metrica_ambulancias">Ambulancias Activas (Automático)</option>
+                    <option value="manual">Valor Numérico Fijo / Manual</option>
+                  </select>
+                </div>
+
+                @if (datos.kpiTipoValor === 'manual') {
+                  <div>
+                    <label class="block font-bold text-[#07483b] mb-1">Valor Manual:</label>
+                    <input type="text" [(ngModel)]="datos.kpiValorManual" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white font-mono text-center text-base font-black" placeholder="Ej: 00 o 15" />
+                  </div>
+                }
+
                 <div class="grid grid-cols-2 gap-2">
                   <div>
-                    <label class="block font-bold text-[#07483b] mb-1">Subtítulo 1 (Superior):</label>
-                    <input type="text" [(ngModel)]="datos.kpiSubtitulo1" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white font-semibold" placeholder="Ej: Registradas en vivo" />
+                    <label class="block font-bold text-[#07483b] mb-1">Subtítulo Superior:</label>
+                    <input type="text" [(ngModel)]="datos.kpiSubtitulo1" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white" placeholder="Ej: Registrados hoy" />
                   </div>
                   <div>
-                    <label class="block font-bold text-[#07483b] mb-1">Subtítulo 2 (Inferior):</label>
-                    <input type="text" [(ngModel)]="datos.kpiSubtitulo2" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white text-slate-600" placeholder="Ej: Alta médica / En terreno" />
+                    <label class="block font-bold text-[#07483b] mb-1">Subtítulo Inferior:</label>
+                    <input type="text" [(ngModel)]="datos.kpiSubtitulo2" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white" placeholder="Ej: En observación" />
                   </div>
                 </div>
               </div>
             }
 
-            <!-- CASO 3: EDITAR O CREAR SECTOR / SECCIÓN OPERATIVA -->
+            <!-- CASO 3: EDITAR O CREAR SECTOR OPERATIVO -->
             @if (datos.tipo === 'sector' || datos.tipo === 'nuevo_sector') {
               <div class="space-y-3">
                 <div class="grid grid-cols-3 gap-2">
-                  <div class="col-span-1">
-                    <label class="block font-bold text-[#07483b] mb-1">Código (Zona):</label>
-                    <input type="text" [(ngModel)]="datos.sectorCodigo" class="w-full p-2.5 rounded-lg border border-[#d2dfd8] bg-white font-black font-mono uppercase" placeholder="ZONA E" />
+                  <div>
+                    <label class="block font-bold text-[#07483b] mb-1">Código:</label>
+                    <input type="text" [(ngModel)]="datos.sectorCodigo" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white font-mono font-bold uppercase" placeholder="Ej: ZONA E" />
                   </div>
                   <div class="col-span-2">
-                    <label class="block font-bold text-[#07483b] mb-1">Capacidad Máx. Paramédicos:</label>
-                    <input type="number" [(ngModel)]="datos.sectorCapacidad" min="1" max="50" class="w-full p-2.5 rounded-lg border border-[#d2dfd8] bg-white font-bold font-mono" />
+                    <label class="block font-bold text-[#07483b] mb-1">Capacidad de Personal:</label>
+                    <input type="number" [(ngModel)]="datos.sectorCapacidad" min="1" max="20" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white font-mono font-bold" />
                   </div>
                 </div>
 
                 <div>
-                  <label class="block font-bold text-[#07483b] mb-1">Nombre Completo del Sector / Zona:</label>
-                  <input type="text" [(ngModel)]="datos.sectorNombre" class="w-full p-2.5 rounded-lg border border-[#d2dfd8] bg-white font-black uppercase" placeholder="ZONA E - PARQUEADERO VIP / EXTERIOR" />
+                  <label class="block font-bold text-[#07483b] mb-1">Nombre Descriptivo de la Zona:</label>
+                  <input type="text" [(ngModel)]="datos.sectorNombre" class="w-full p-2.5 rounded-lg border border-[#d2dfd8] bg-white font-bold" placeholder="Ej: ZONA E - TRIBUNAS ORIENTE" />
                 </div>
               </div>
             }
 
-            <!-- CASO 4: EDITAR RECUADRO PERSONALIZADO -->
+            <!-- CASO 4: EDITAR WIDGET VISUAL BUILDER (Power BI / Grafana) -->
             @if (datos.tipo === 'widget') {
               <div class="space-y-3">
                 <div class="grid grid-cols-4 gap-2">
-                  <div class="col-span-1">
+                  <div>
                     <label class="block font-bold text-[#07483b] mb-1">Ícono:</label>
                     <input type="text" [(ngModel)]="datos.widgetIcono" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white text-center text-lg" />
                   </div>
                   <div class="col-span-3">
-                    <label class="block font-bold text-[#07483b] mb-1">Título del Recuadro:</label>
+                    <label class="block font-bold text-[#07483b] mb-1">Título del Bloque Visual:</label>
                     <input type="text" [(ngModel)]="datos.widgetTitulo" class="w-full p-2.5 rounded-lg border border-[#d2dfd8] bg-white font-bold uppercase" />
                   </div>
                 </div>
+
+                <!-- Selector de Visualización Power BI -->
+                <div class="grid grid-cols-2 gap-2 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                  <div>
+                    <label class="block font-bold text-amber-900 mb-1">📊 Tipo de Visualización:</label>
+                    <select [(ngModel)]="datos.widgetVisualType" class="w-full p-2 rounded-lg border border-amber-300 bg-white font-bold">
+                      <option value="grafico_dona">🍩 Gráfico de Dona (Triage START)</option>
+                      <option value="grafico_barras">📊 Gráfico de Barras (Atenciones por Sector)</option>
+                      <option value="curva_tendencia">📈 Curva de Tendencia (Flujo Horario)</option>
+                      <option value="gauge_radial">🎯 Medidor Radial (Ocupación Camillas)</option>
+                      <option value="tarjeta_kpi">🔢 Tarjeta KPI Inteligente</option>
+                      <option value="texto_markdown">📝 Consigna Operativa / Notas</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block font-bold text-amber-900 mb-1">📐 Ancho del Bloque (Grid):</label>
+                    <select [(ngModel)]="datos.widgetColSpan" class="w-full p-2 rounded-lg border border-amber-300 bg-white font-bold">
+                      <option [ngValue]="1">1 Columna (33% lienzo)</option>
+                      <option [ngValue]="2">2 Columnas (66% lienzo)</option>
+                      <option [ngValue]="3">Ancho Completo (100% lienzo)</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div>
-                  <label class="block font-bold text-[#07483b] mb-1">Contenido / Consigna Operativa:</label>
-                  <textarea [(ngModel)]="datos.widgetContenido" rows="4" class="w-full p-2.5 rounded-lg border border-[#d2dfd8] bg-white font-sans"></textarea>
+                  <label class="block font-bold text-[#07483b] mb-1">Descripción o Consigna Operativa:</label>
+                  <textarea [(ngModel)]="datos.widgetContenido" rows="3" class="w-full p-2.5 rounded-lg border border-[#d2dfd8] bg-white font-sans" placeholder="Texto explicativo o instrucciones tácticas para este bloque"></textarea>
                 </div>
               </div>
             }
@@ -282,58 +310,57 @@ export class QuickEditModalComponent {
       if (this.datos.nivelRiesgo) this.customizer.actualizarTexto('nivelRiesgo', this.datos.nivelRiesgo);
       if (this.datos.aforoTexto) this.customizer.actualizarTexto('aforoTexto', this.datos.aforoTexto);
 
-      this.emergency.evento.update(e => ({
-        ...e,
-        nombre: this.datos.nombreEvento || e.nombre,
-        ciudad: this.datos.ciudadSede || e.ciudad,
-        lugar: this.datos.lugarRecinto || e.lugar,
-        fecha: this.datos.fechaHorario || e.fecha,
-        riesgo: (this.datos.nivelRiesgo as 'Bajo' | 'Medio' | 'Alto') || e.riesgo
-      }));
+      this.emergency.actualizarEvento({
+        nombre: this.datos.nombreEvento || this.emergency.evento().nombre,
+        tipo: this.emergency.evento().tipo,
+        ciudad: this.datos.ciudadSede || this.emergency.evento().ciudad,
+        lugar: this.datos.lugarRecinto || this.emergency.evento().lugar,
+        fecha: this.datos.fechaHorario?.split('•')[0]?.trim() || this.emergency.evento().fecha,
+        horario: this.datos.fechaHorario?.split('•')[1]?.trim() || this.emergency.evento().horario,
+        riesgo: (this.datos.nivelRiesgo as any) || this.emergency.evento().riesgo,
+        aforoEstimado: parseInt(this.datos.aforoTexto?.replace(/[^0-9]/g, '') || '28000', 10)
+      });
 
-      this.emergency.registrarLog('EDICION_ELEMENTO' as any, `Evento actualizado: ${this.datos.nombreEvento}`);
-      this.emergency.mostrarNotificacion('Evento actualizado exitosamente', 'exito');
+      this.emergency.mostrarNotificacion('Datos del Evento actualizados y sincronizados', 'exito');
     }
 
-    // GESTIÓN DE KPIS DINÁMICOS (Editar existente)
     if (this.datos.tipo === 'kpi' && this.datos.id) {
       this.customizer.editarKpi(this.datos.id, {
-        titulo: this.datos.kpiTitulo || 'KPI',
-        badgeTexto: this.datos.kpiBadgeTexto || 'METRICA',
-        badgeColor: this.datos.kpiBadgeColor || 'emerald',
-        tipoValor: this.datos.kpiTipoValor || 'metrica_atenciones',
-        valorManual: this.datos.kpiValorManual || '00',
-        subtitulo1: this.datos.kpiSubtitulo1 || '',
-        subtitulo2: this.datos.kpiSubtitulo2 || ''
+        titulo: this.datos.kpiTitulo,
+        badgeTexto: this.datos.kpiBadgeTexto,
+        badgeColor: this.datos.kpiBadgeColor,
+        tipoValor: this.datos.kpiTipoValor,
+        valorManual: this.datos.kpiValorManual,
+        subtitulo1: this.datos.kpiSubtitulo1,
+        subtitulo2: this.datos.kpiSubtitulo2,
+        colorValor: this.datos.kpiColorValor
       });
       this.emergency.mostrarNotificacion(`Indicador ${this.datos.kpiTitulo} actualizado`, 'exito');
     }
 
-    // GESTIÓN DE KPIS DINÁMICOS (Agregar nuevo)
     if (this.datos.tipo === 'nuevo_kpi') {
       this.customizer.agregarKpi({
         titulo: this.datos.kpiTitulo || 'NUEVO INDICADOR',
-        badgeTexto: this.datos.kpiBadgeTexto || 'ACTIVO',
+        badgeTexto: this.datos.kpiBadgeTexto || 'LIVE',
         badgeColor: this.datos.kpiBadgeColor || 'emerald',
         tipoValor: this.datos.kpiTipoValor || 'metrica_atenciones',
         valorManual: this.datos.kpiValorManual || '00',
-        subtitulo1: this.datos.kpiSubtitulo1 || 'En seguimiento',
-        subtitulo2: this.datos.kpiSubtitulo2 || 'Sistema operativo'
+        subtitulo1: this.datos.kpiSubtitulo1 || 'Registros',
+        subtitulo2: this.datos.kpiSubtitulo2 || 'En seguimiento',
+        colorValor: '#07483b'
       });
-      this.emergency.mostrarNotificacion(`Nuevo indicador KPI creado`, 'exito');
+      this.emergency.mostrarNotificacion(`Nuevo KPI creado exitosamente`, 'exito');
     }
 
-    // GESTIÓN DE SECTORES / SECCIONES (Editar existente)
     if (this.datos.tipo === 'sector' && this.datos.id) {
       this.emergency.editarSector(this.datos.id, {
         codigo: this.datos.sectorCodigo,
         nombre: this.datos.sectorNombre,
         capacidadPersonal: this.datos.sectorCapacidad
       });
-      this.emergency.mostrarNotificacion(`Sector ${this.datos.sectorCodigo} modificado`, 'exito');
+      this.emergency.mostrarNotificacion(`Sector ${this.datos.sectorCodigo} actualizado`, 'exito');
     }
 
-    // GESTIÓN DE SECTORES / SECCIONES (Agregar nueva sección)
     if (this.datos.tipo === 'nuevo_sector') {
       this.emergency.agregarSector({
         codigo: this.datos.sectorCodigo || `ZONA ${String.fromCharCode(65 + this.emergency.sectores().length)}`,
@@ -344,22 +371,15 @@ export class QuickEditModalComponent {
     }
 
     if (this.datos.tipo === 'widget' && this.datos.id) {
-      this.customizer.config.update(c => ({
-        ...c,
-        recuadrosPersonalizados: c.recuadrosPersonalizados.map(w => {
-          if (w.id === this.datos.id) {
-            return {
-              ...w,
-              titulo: this.datos.widgetTitulo || w.titulo,
-              contenido: this.datos.widgetContenido || w.contenido,
-              icono: this.datos.widgetIcono || w.icono
-            };
-          }
-          return w;
-        })
-      }));
-      this.customizer.guardarEnLocalStorage();
-      this.emergency.mostrarNotificacion('Recuadro personalizado guardado', 'exito');
+      this.customizer.editarRecuadroPersonalizado(this.datos.id, {
+        titulo: this.datos.widgetTitulo,
+        contenido: this.datos.widgetContenido,
+        icono: this.datos.widgetIcono,
+        visualType: this.datos.widgetVisualType,
+        dataSource: this.datos.widgetDataSource,
+        colSpan: this.datos.widgetColSpan
+      });
+      this.emergency.mostrarNotificacion('Bloque analítico guardado exitosamente', 'exito');
     }
 
     if (this.datos.tipo === 'header') {

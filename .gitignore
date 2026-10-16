@@ -55,8 +55,24 @@ build/
 *.spec
 *.exe
 
-# Database lock files
+# Databases & SQLite WAL
 *.db
 *.db-shm
 *.db-wal
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal
+
+# Generated Reports
+backend/exports/*.xlsx
+backend/exports/*.csv
+
+# Server Infrastructure & configs
+*.conf
+*.service
+
+# Mobile & Capacitor Android artifacts
+android/
+*.apk
+*.aab
 

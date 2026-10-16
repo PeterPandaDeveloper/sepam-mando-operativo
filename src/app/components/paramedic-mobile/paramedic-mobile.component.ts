@@ -14,46 +14,37 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="flex justify-center py-2 px-2">
+    <div class="w-full max-w-xl mx-auto py-2 px-2 sm:px-4">
       
-      <!-- Contenedor / Marco de Celular Táctil en Estilo Beige Clínico -->
-      <div class="w-full max-w-sm sm:max-w-md bg-[#edece4] border-4 border-[#07483b] rounded-[2.5rem] shadow-xl overflow-hidden relative text-[#0d2822] flex flex-col min-h-[820px]">
+      <!-- Contenedor Nativo Táctico de Brigadista -->
+      <div class="w-full bg-[#f5f4ed] border-2 border-[#07483b] rounded-2xl shadow-xl overflow-hidden relative text-[#0d2822] flex flex-col min-h-[750px]">
         
-        <!-- Muesca Superior del Celular -->
-        <div class="bg-[#edece4] pt-2 pb-1 flex justify-center items-center">
-          <div class="w-20 h-3.5 bg-[#d2dfd8] rounded-full flex items-center justify-center">
-            <div class="w-2 h-2 rounded-full bg-slate-500 mr-2"></div>
-            <div class="w-7 h-1.5 bg-slate-600 rounded-full"></div>
-          </div>
-        </div>
-
-        <!-- Barra de Estado Móvil con IP local -->
-        <div class="px-5 py-2 flex items-center justify-between text-xs text-[#405c54] border-b border-[#d2dfd8] bg-[#f5f4ed]">
+        <!-- Barra de Estado Operativo Táctico -->
+        <div class="px-4 py-2 flex items-center justify-between text-xs text-[#405c54] border-b border-[#d2dfd8] bg-[#edece4]">
           <div class="flex items-center gap-1.5 font-mono font-bold text-[#07483b]">
-            <span>6:29</span>
-            <span class="text-[10px] text-emerald-700 font-sans uppercase">p.m.</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+            <span>SEPAM MÓVIL BRIGADISTAS</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 px-1.5 py-0.2 rounded font-mono font-bold">
-              192.168.100.9
+            <span class="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full font-mono font-bold">
+              EN VIVO
             </span>
-            <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
           </div>
         </div>
 
         <!-- Encabezado de la App del Paramédico (Verde Bosque) -->
         <div class="p-4 bg-[#07483b] text-white flex items-center justify-between shadow-sm">
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-full bg-white/20 border border-white/40 flex items-center justify-center text-white font-bold text-xs">
+            <div class="w-9 h-9 rounded-full bg-white/20 border border-white/40 flex items-center justify-center text-white font-black text-sm">
               {{ emergency.paramedicoActivo().nombre.charAt(0) }}
             </div>
             <div>
-              <h2 class="text-xs font-bold uppercase tracking-wider text-white">App Paramédico SEPAM</h2>
+              <h2 class="text-xs font-black uppercase tracking-wider text-white">Atención en Terreno (Campo)</h2>
               <span class="text-[11px] text-emerald-100 block">{{ emergency.paramedicoActivo().nombre }} ({{ emergency.paramedicoActivo().usuario }})</span>
             </div>
           </div>
 
-          <div class="flex items-center gap-1.5 bg-[#05372d] px-2 py-0.5 rounded-full border border-emerald-400/30">
+          <div class="flex items-center gap-1.5 bg-[#05372d] px-2.5 py-1 rounded-full border border-emerald-400/30">
             <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
             <span class="text-[11px] font-mono text-emerald-100 font-bold uppercase">
               {{ emergency.paramedicoActivo().estado }}
@@ -64,19 +55,19 @@ import {
         <!-- CUERPO PRINCIPAL DEL MÓVIL (Beige #f5f4ed) -->
         <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-[#f5f4ed]">
           
-          <!-- Selector Rápido de Paramédico (1 de los 20 paramédicos con usuario/clave temporal) -->
+          <!-- Selector Rápido de Paramédico (Sin contraseñas a la vista) -->
           <div class="bg-white border border-[#d2dfd8] rounded-xl p-3 shadow-xs">
-            <div class="flex items-center justify-between text-xs mb-1">
-              <span class="text-[#648279] font-bold">Sesión Paramédico (20 Disp.):</span>
-              <span class="text-[10px] text-amber-800 font-mono bg-amber-50 px-1.5 py-0.2 rounded font-bold">
-                Pass: {{ emergency.paramedicoActivo().passwordTemporal }}
+            <div class="flex items-center justify-between text-xs mb-1.5">
+              <span class="text-[#648279] font-bold">Brigadista Activo en Dispositivo:</span>
+              <span class="text-[10px] text-emerald-800 font-mono bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-bold">
+                Sector: {{ emergency.paramedicoActivo().sectorNombre }}
               </span>
             </div>
             
             <select 
               [ngModel]="emergency.paramedicoActivo().id" 
               (ngModelChange)="seleccionarParamedico($event)"
-              class="w-full bg-[#f5f4ed] text-[#07483b] border border-[#d2dfd8] rounded-lg p-1.5 text-xs font-bold focus:outline-none"
+              class="w-full bg-[#f5f4ed] text-[#07483b] border border-[#d2dfd8] rounded-lg p-2 text-xs font-bold focus:outline-none"
             >
               @for (p of emergency.personal(); track p.id) {
                 <option [value]="p.id">{{ p.usuario }} - {{ p.nombre }} ({{ p.sectorNombre }})</option>

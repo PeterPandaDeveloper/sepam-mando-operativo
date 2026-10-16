@@ -89,6 +89,10 @@ class ClaveGenerar(BaseModel):
 class TelegramConfig(BaseModel):
     token: str
 
+class ConfigUiUpdate(BaseModel):
+    config: Dict[str, Any]
+    usuario: Optional[str] = "Super Usuario PMU"
+
 @app.get("/")
 def raiz():
     dist_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dist", "sepam-mando-operativo", "browser")
@@ -270,6 +274,51 @@ def actualizar_evento(data: EventoUpdate):
     conn.close()
     redis_service.invalidar_cache()
     return {"mensaje": "Evento actualizado exitosamente"}
+
+# --- GESTIÓN DE CONFIGURACIÓN VISUAL Y LAYOUT POWER BI ---
+
+@app.get("/api/config-ui")
+def obtener_config_ui():
+    """Obtiene la configuración visual y layout del Dashboard desde Redis o SQLite"""
+    if redis_service.is_online():
+        try:
+            cached = redis_service.client.get("sepam:config_ui")
+            if cached:
+                return json.loads(cached)
+        except Exception:
+            pass
+
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT config_json FROM configuracion_ui WHERE id = 'default' LIMIT 1;")
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return json.loads(row[0])
+    return None
+
+@app.post("/api/config-ui")
+def guardar_config_ui(item: ConfigUiUpdate):
+    """Guarda el diseño y layout personalizado del Puesto de Mando para sincronizarlo con todos los monitores"""
+    config_str = json.dumps(item.config)
+    ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("""
+        INSERT OR REPLACE INTO configuracion_ui (id, config_json, actualizado_en, actualizado_por)
+        VALUES ('default', ?, ?, ?);
+    """, (config_str, ahora, item.usuario or "Super Usuario PMU"))
+    conn.commit()
+    conn.close()
+
+    if redis_service.is_online():
+        try:
+            redis_service.client.set("sepam:config_ui", config_str)
+        except Exception:
+            pass
+
+    return {"mensaje": "Diseño del Puesto de Mando sincronizado en servidor", "timestamp": ahora}
 
 # --- GESTIÓN TRANSACCIONAL DE ATENCIONES ---
 
