@@ -23,7 +23,11 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             <span class="text-xs text-[#648279] font-mono">Gestión Total de Parámetros y Recursos</span>
           </div>
           <h2 class="text-xl md:text-2xl font-black text-[#0d2822] flex items-center gap-2">
-            <span>⚙️ Panel de Gestión Operativa (CRUD)</span>
+            <svg class="w-6 h-6 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span>Panel de Gestión Operativa (CRUD)</span>
           </h2>
           <p class="text-xs text-[#405c54] mt-1">
             Módulo integral para crear, editar, eliminar, exportar e importar datos en Excel y CSV de Ambulancias, Empleados y Puestos ACV.
@@ -39,7 +43,7 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             [class.text-[#405c54]]="tabActiva !== 'paramedicos'"
             class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
           >
-            👥 Empleados / Paramédicos ({{ emergency.personal().length }})
+            Empleados / Paramédicos ({{ emergency.personal().length }})
           </button>
           <button 
             (click)="tabActiva = 'ambulancias'"
@@ -48,7 +52,7 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             [class.text-[#405c54]]="tabActiva !== 'ambulancias'"
             class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
           >
-            🚑 Ambulancias ({{ emergency.ambulancias().length }})
+            Ambulancias ({{ emergency.ambulancias().length }})
           </button>
           <button 
             (click)="tabActiva = 'acvs'"
@@ -57,7 +61,7 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             [class.text-[#405c54]]="tabActiva !== 'acvs'"
             class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
           >
-            🏥 Puestos ACV ({{ emergency.acvs().length }})
+            Puestos ACV ({{ emergency.acvs().length }})
           </button>
           <button 
             (click)="tabActiva = 'sectores'"
@@ -66,7 +70,7 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             [class.text-[#405c54]]="tabActiva !== 'sectores'"
             class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
           >
-            📍 Sectores ({{ emergency.sectores().length }})
+            Sectores ({{ emergency.sectores().length }})
           </button>
           <button 
             (click)="tabActiva = 'superusuarios'"
@@ -75,7 +79,7 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             [class.text-[#405c54]]="tabActiva !== 'superusuarios'"
             class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
           >
-            ⭐ Super Usuarios
+            Super Usuarios
           </button>
           <button 
             (click)="tabActiva = 'evento'"
@@ -84,7 +88,7 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             [class.text-[#405c54]]="tabActiva !== 'evento'"
             class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
           >
-            📅 Evento
+            Evento
           </button>
           <button 
             (click)="tabActiva = 'red'"
@@ -93,7 +97,7 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             [class.text-[#405c54]]="tabActiva !== 'red'"
             class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
           >
-            <span>📲 Código QR Móvil</span>
+            <span>Código QR Móvil</span>
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
           </button>
           <button 
@@ -103,7 +107,7 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             [class.text-[#405c54]]="tabActiva !== 'poliglota'"
             class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
           >
-            <span>⚡ Tri-Motor Políglota</span>
+            <span>Tri-Motor Políglota</span>
             <span class="w-1.5 h-1.5 rounded-full" [ngClass]="db.redisOnline() ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"></span>
           </button>
         </div>
@@ -128,23 +132,26 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             <div class="flex flex-wrap items-center gap-2">
               <button 
                 (click)="exportarParamedicosCSV()"
-                class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1"
+                class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1.5"
                 title="Descargar lista de empleados en formato CSV"
               >
-                <span>📥 CSV</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>CSV</span>
               </button>
               <button 
                 (click)="exportarParamedicosExcel()"
-                class="px-3 py-1.5 rounded-lg bg-teal-800 hover:bg-teal-700 text-white text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1"
+                class="px-3 py-1.5 rounded-lg bg-teal-800 hover:bg-teal-700 text-white text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1.5"
                 title="Descargar planilla Excel"
               >
-                <span>📊 Excel</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>Excel</span>
               </button>
               <label 
-                class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-black text-xs font-black cursor-pointer shadow-xs flex items-center gap-1"
+                class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-black text-xs font-black cursor-pointer shadow-xs flex items-center gap-1.5"
                 title="Subir archivo CSV con nuevos paramédicos"
               >
-                <span>📤 Importar CSV</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                <span>Importar CSV</span>
                 <input type="file" accept=".csv" class="hidden" (change)="importarCSV($event, 'paramedicos')" />
               </label>
               <button 
@@ -211,7 +218,7 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
                         class="px-2 py-1 rounded bg-red-100 hover:bg-red-200 text-[11px] font-bold text-red-700 cursor-pointer"
                         title="Eliminar paramédico"
                       >
-                        🗑️
+                        <svg class="w-3.5 h-3.5 inline text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                       </button>
                     </td>
                   </tr>
@@ -241,20 +248,23 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             <div class="flex flex-wrap items-center gap-2">
               <button 
                 (click)="exportarAmbulanciasCSV()"
-                class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1"
+                class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1.5"
               >
-                <span>📥 CSV</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>CSV</span>
               </button>
               <button 
                 (click)="exportarAmbulanciasExcel()"
-                class="px-3 py-1.5 rounded-lg bg-teal-800 hover:bg-teal-700 text-white text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1"
+                class="px-3 py-1.5 rounded-lg bg-teal-800 hover:bg-teal-700 text-white text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1.5"
               >
-                <span>📊 Excel</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>Excel</span>
               </button>
               <label 
-                class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-black text-xs font-black cursor-pointer shadow-xs flex items-center gap-1"
+                class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-black text-xs font-black cursor-pointer shadow-xs flex items-center gap-1.5"
               >
-                <span>📤 Importar CSV</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                <span>Importar CSV</span>
                 <input type="file" accept=".csv" class="hidden" (change)="importarCSV($event, 'ambulancias')" />
               </label>
               <button 
@@ -279,7 +289,7 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
                   </span>
                 </div>
                 <h4 class="text-xs font-bold text-[#0d2822]">{{ amb.tipo }}</h4>
-                <p class="text-xs text-[#07483b] font-bold">🚑 Paramédico: {{ amb.paramedicoResponsable }}</p>
+                <p class="text-xs text-[#07483b] font-bold">Paramédico: {{ amb.paramedicoResponsable }}</p>
                 <p class="text-xs text-[#405c54]">Conductor: {{ amb.conductor || 'Por designar' }}</p>
                 <div class="pt-2 flex justify-end gap-1.5 border-t border-[#d2dfd8]">
                   <button 
@@ -291,9 +301,10 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
                   </button>
                   <button 
                     (click)="eliminarAmbulancia(amb.id)"
-                    class="px-2.5 py-1 rounded bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold cursor-pointer"
+                    class="px-2.5 py-1 rounded bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold cursor-pointer inline-flex items-center gap-1"
                   >
-                    🗑️ Eliminar
+                    <svg class="w-3 h-3 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <span>Eliminar</span>
                   </button>
                 </div>
               </div>
@@ -321,20 +332,23 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             <div class="flex flex-wrap items-center gap-2">
               <button 
                 (click)="exportarACVsCSV()"
-                class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1"
+                class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1.5"
               >
-                <span>📥 CSV</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>CSV</span>
               </button>
               <button 
                 (click)="exportarACVsExcel()"
-                class="px-3 py-1.5 rounded-lg bg-teal-800 hover:bg-teal-700 text-white text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1"
+                class="px-3 py-1.5 rounded-lg bg-teal-800 hover:bg-teal-700 text-white text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1.5"
               >
-                <span>📊 Excel</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>Excel</span>
               </button>
               <label 
-                class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-black text-xs font-black cursor-pointer shadow-xs flex items-center gap-1"
+                class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-black text-xs font-black cursor-pointer shadow-xs flex items-center gap-1.5"
               >
-                <span>📤 Importar CSV</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                <span>Importar CSV</span>
                 <input type="file" accept=".csv" class="hidden" (change)="importarCSV($event, 'acvs')" />
               </label>
               <button 
@@ -358,8 +372,8 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
                   </span>
                 </div>
                 <h4 class="text-sm font-bold text-[#0d2822]">{{ acv.nombre }}</h4>
-                <p class="text-xs text-[#405c54]">📍 Ubicación: {{ acv.ubicacion }}</p>
-                <p class="text-xs text-[#07483b] font-semibold">👨‍⚕️ Encargado: {{ acv.encargado }}</p>
+                <p class="text-xs text-[#405c54]">Ubicación: {{ acv.ubicacion }}</p>
+                <p class="text-xs text-[#07483b] font-semibold">Encargado: {{ acv.encargado }}</p>
                 <p class="text-xs text-[#648279]">Capacidad: {{ acv.capacidadCamillas }} camillas de observación</p>
                 <div class="pt-2 flex justify-end gap-1.5 border-t border-[#d2dfd8]">
                   <button 
@@ -371,9 +385,10 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
                   </button>
                   <button 
                     (click)="eliminarACV(acv.id)" 
-                    class="px-2.5 py-1 rounded bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold cursor-pointer"
+                    class="px-2.5 py-1 rounded bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold cursor-pointer inline-flex items-center gap-1"
                   >
-                    🗑️ Eliminar
+                    <svg class="w-3 h-3 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <span>Eliminar</span>
                   </button>
                 </div>
               </div>
@@ -523,7 +538,8 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
                   <span class="text-xs text-[#648279] font-mono">Vercel Edge + Oracle Cloud</span>
                 </div>
                 <h3 class="text-base font-black text-[#07483b] flex items-center gap-2">
-                  <span>📲 Acceso Móvil Oficial & Código QR para Paramédicos</span>
+                  <svg class="w-5 h-5 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                  <span>Acceso Móvil Oficial & Código QR para Paramédicos</span>
                 </h3>
                 <p class="text-xs text-[#405c54] mt-0.5">
                   El sistema opera 100% en la nube con HTTPS permanente. Cualquier paramédico puede escanear este código con su celular para ingresar al instante.
@@ -562,7 +578,10 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
                 <div class="flex items-center gap-2 mt-1">
                   <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
                   <div>
-                    <h4 class="text-xs font-black">HTTPS Permanente 🔒</h4>
+                    <h4 class="text-xs font-black flex items-center gap-1">
+                      <svg class="w-3.5 h-3.5 text-sky-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                      HTTPS Permanente
+                    </h4>
                     <p class="text-[11px] opacity-80">Cero bloqueos en Android y iPhone</p>
                   </div>
                 </div>
@@ -581,9 +600,9 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             </div>
 
             <!-- Tarjeta Central de Código QR Oficial -->
-            <div class="p-5 rounded-xl bg-slate-900 text-white shadow-md">
+            <div class="p-5 rounded-xl bg-[#f5f4ed] border border-[#d2dfd8] text-[#0d2822] shadow-xs">
               <div class="flex flex-col sm:flex-row items-center gap-6">
-                <div class="p-2.5 bg-white rounded-2xl shadow-xl border-4 border-amber-400 flex-shrink-0">
+                <div class="p-2.5 bg-white rounded-2xl shadow-md border-2 border-[#07483b]/20 flex-shrink-0">
                   <img 
                     [src]="network.qrOficial" 
                     alt="Código QR Oficial"
@@ -593,33 +612,33 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
 
                 <div class="flex-1 space-y-3 text-xs text-center sm:text-left">
                   <div>
-                    <span class="text-amber-300 font-mono uppercase font-bold text-[11px] block">
+                    <span class="text-[#07483b] font-mono uppercase font-bold text-[11px] block">
                       Enlace Web Oficial para Brigadistas:
                     </span>
-                    <div class="mt-1 flex items-center gap-2 p-2 rounded-lg bg-black/60 border border-slate-700">
+                    <div class="mt-1 flex items-center gap-2 p-2 rounded-lg bg-white border border-[#d2dfd8]">
                       <input 
                         type="text" 
                         readonly 
                         [value]="network.urlOficial"
-                        class="bg-transparent text-emerald-300 font-mono text-xs font-bold w-full focus:outline-none"
+                        class="bg-transparent text-[#07483b] font-mono text-xs font-bold w-full focus:outline-none"
                       />
                       <button 
                         (click)="copiarUrlAdmin(network.urlOficial)"
-                        class="px-3 py-1.5 rounded bg-amber-400 hover:bg-amber-300 text-slate-950 font-black cursor-pointer text-xs flex-shrink-0 transition-all active:scale-95"
+                        class="px-3 py-1.5 rounded bg-[#07483b] hover:bg-[#0d2822] text-white font-bold cursor-pointer text-xs flex-shrink-0 transition-all active:scale-95"
                       >
                         Copiar Enlace
                       </button>
                     </div>
 
                     @if (network.copiadoMensaje()) {
-                      <p class="text-xs text-emerald-400 font-bold mt-1 animate-pulse">
+                      <p class="text-xs text-emerald-700 font-bold mt-1">
                         ✓ {{ network.copiadoMensaje() }}
                       </p>
                     }
                   </div>
 
-                  <div class="p-3 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-[11px] leading-relaxed space-y-1">
-                    <p class="font-bold text-white">📱 ¿Cómo se conectan los brigadistas en el evento?</p>
+                  <div class="p-3 rounded-lg bg-white border border-[#d2dfd8] text-[#405c54] text-[11px] leading-relaxed space-y-1">
+                    <p class="font-bold text-[#0d2822]">¿Cómo se conectan los brigadistas en el evento?</p>
                     <p>1. Abren la cámara de su celular y apuntan directamente a este código QR.</p>
                     <p>2. O puedes copiar el enlace y enviárselo directamente al grupo de WhatsApp del evento.</p>
                     <p>3. La ficha médica se abre al instante con soporte offline y guardado en la nube.</p>
@@ -647,7 +666,8 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
                   <span class="text-xs text-[#648279] font-mono">SQLite WAL + DuckDB 1.5 + Redis 7 NoSQL</span>
                 </div>
                 <h3 class="text-base font-black text-[#07483b] flex items-center gap-2">
-                  <span>⚡ Motores de Almacenamiento, Analítica y Alertas en Tiempo Real</span>
+                  <svg class="w-5 h-5 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  <span>Motores de Almacenamiento, Analítica y Alertas en Tiempo Real</span>
                 </h3>
                 <p class="text-xs text-[#405c54] mt-0.5">
                   Arquitectura híbrida optimizada para eventos masivos: transacciones concurrentes seguras, reportes OLAP y alertas críticas instantáneas en memoria.
@@ -658,7 +678,8 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
                 class="px-3.5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap hover:scale-105"
                 title="Disparar alarma sonora y alerta visual de simulacro en tiempo real vía Redis"
               >
-                <span>🚨 Probar Alarma Sonora (Redis)</span>
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                <span>Probar Alarma Sonora (Redis)</span>
               </button>
             </div>
 
@@ -668,7 +689,9 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
               <div class="p-4 rounded-xl border border-red-200 bg-red-50/50 space-y-3">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
-                    <span class="text-xl">⚡</span>
+                    <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-700">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
                     <div>
                       <h4 class="text-sm font-bold text-red-900">Redis 7 (NoSQL In-Memory)</h4>
                       <p class="text-[11px] text-red-700">Pub/Sub & Microsecond Cache</p>
@@ -693,7 +716,9 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
               <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/50 space-y-3">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
-                    <span class="text-xl">🦆</span>
+                    <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    </div>
                     <div>
                       <h4 class="text-sm font-bold text-amber-900">DuckDB 1.5 (OLAP Columnar)</h4>
                       <p class="text-[11px] text-amber-700">Analítica Vectorizada & Excel</p>
@@ -707,8 +732,9 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
                   Calcula cubos analíticos, curvas horarias por sector y genera informes ejecutivos profesionales en <strong>Excel (.xlsx)</strong> y <strong>CSV</strong> listos para auditorías institucionales.
                 </p>
                 <div class="flex gap-2 pt-1">
-                  <button (click)="db.descargarExcel()" class="flex-1 py-1.5 px-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-bold transition-all cursor-pointer">
-                    📥 Bajar Excel
+                  <button (click)="db.descargarExcel()" class="flex-1 py-1.5 px-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>Bajar Excel</span>
                   </button>
                   <button (click)="db.descargarCSV()" class="py-1.5 px-2 bg-slate-700 hover:bg-slate-800 text-white rounded text-xs font-bold transition-all cursor-pointer">
                     CSV
@@ -720,7 +746,9 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
               <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-3">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
-                    <span class="text-xl">💾</span>
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                    </div>
                     <div>
                       <h4 class="text-sm font-bold text-emerald-900">SQLite 3 (WAL Mode)</h4>
                       <p class="text-[11px] text-emerald-700">OLTP Transaccional ACID</p>
@@ -744,7 +772,8 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
             <!-- Registro de Alertas Recientes en Memoria NoSQL -->
             <div class="border border-[#d2dfd8] rounded-xl p-4 bg-[#f8faf9] space-y-3">
               <h4 class="text-xs font-bold uppercase tracking-wider text-[#0d2822] flex items-center gap-2">
-                <span>🔔 Registro en Memoria NoSQL de Alertas Recientes (Redis List)</span>
+                <svg class="w-4 h-4 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                <span>Registro en Memoria NoSQL de Alertas Recientes (Redis List)</span>
                 <span class="text-[10px] bg-red-100 text-red-800 font-mono px-2 py-0.5 rounded-full">
                   {{ db.alertasRecientes().length }} en memoria
                 </span>

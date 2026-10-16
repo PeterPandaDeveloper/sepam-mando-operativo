@@ -199,32 +199,26 @@ export interface QuickEditData {
             <!-- CASO 4: EDITAR WIDGET VISUAL BUILDER (Power BI / Grafana) -->
             @if (datos.tipo === 'widget') {
               <div class="space-y-3">
-                <div class="grid grid-cols-4 gap-2">
-                  <div>
-                    <label class="block font-bold text-[#07483b] mb-1">Ícono:</label>
-                    <input type="text" [(ngModel)]="datos.widgetIcono" class="w-full p-2 rounded-lg border border-[#d2dfd8] bg-white text-center text-lg" />
-                  </div>
-                  <div class="col-span-3">
-                    <label class="block font-bold text-[#07483b] mb-1">Título del Bloque Visual:</label>
-                    <input type="text" [(ngModel)]="datos.widgetTitulo" class="w-full p-2.5 rounded-lg border border-[#d2dfd8] bg-white font-bold uppercase" />
-                  </div>
+                <div>
+                  <label class="block font-bold text-[#07483b] mb-1">Título del Bloque Visual:</label>
+                  <input type="text" [(ngModel)]="datos.widgetTitulo" class="w-full p-2.5 rounded-lg border border-[#d2dfd8] bg-white font-bold uppercase" />
                 </div>
 
                 <!-- Selector de Visualización Power BI -->
                 <div class="grid grid-cols-2 gap-2 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl">
                   <div>
-                    <label class="block font-bold text-amber-900 mb-1">📊 Tipo de Visualización:</label>
+                    <label class="block font-bold text-amber-900 mb-1">Tipo de Visualización:</label>
                     <select [(ngModel)]="datos.widgetVisualType" class="w-full p-2 rounded-lg border border-amber-300 bg-white font-bold">
-                      <option value="grafico_dona">🍩 Gráfico de Dona (Triage START)</option>
-                      <option value="grafico_barras">📊 Gráfico de Barras (Atenciones por Sector)</option>
-                      <option value="curva_tendencia">📈 Curva de Tendencia (Flujo Horario)</option>
-                      <option value="gauge_radial">🎯 Medidor Radial (Ocupación Camillas)</option>
-                      <option value="tarjeta_kpi">🔢 Tarjeta KPI Inteligente</option>
-                      <option value="texto_markdown">📝 Consigna Operativa / Notas</option>
+                      <option value="grafico_dona">Gráfico de Dona (Triage START)</option>
+                      <option value="grafico_barras">Gráfico de Barras (Atenciones por Sector)</option>
+                      <option value="curva_tendencia">Curva de Tendencia (Flujo Horario)</option>
+                      <option value="gauge_radial">Medidor Radial (Ocupación Camillas)</option>
+                      <option value="tarjeta_kpi">Tarjeta KPI Inteligente</option>
+                      <option value="texto_markdown">Consigna Operativa / Notas</option>
                     </select>
                   </div>
                   <div>
-                    <label class="block font-bold text-amber-900 mb-1">📐 Ancho del Bloque (Grid):</label>
+                    <label class="block font-bold text-amber-900 mb-1">Ancho del Bloque (Grid):</label>
                     <select [(ngModel)]="datos.widgetColSpan" class="w-full p-2 rounded-lg border border-amber-300 bg-white font-bold">
                       <option [ngValue]="1">1 Columna (33% lienzo)</option>
                       <option [ngValue]="2">2 Columnas (66% lienzo)</option>

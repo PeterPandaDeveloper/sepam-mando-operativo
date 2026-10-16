@@ -85,7 +85,7 @@ import { QuickEditModalComponent } from '../quick-edit-modal/quick-edit-modal.co
                 <svg class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
-                <span>{{ emergency.esSuperUsuario() ? '📋 Generar Reporte' : '👁️ Ver Reporte' }}</span>
+                <span>{{ emergency.esSuperUsuario() ? 'Generar Reporte' : 'Ver Reporte' }}</span>
               </button>
 
               @if (emergency.esSuperUsuario()) {
@@ -109,14 +109,20 @@ import { QuickEditModalComponent } from '../quick-edit-modal/quick-edit-modal.co
       @if (filtroSectorActivo() || filtroTriageActivo()) {
         <div class="p-3 px-4 rounded-xl bg-amber-500/15 border-2 border-amber-500/50 flex flex-wrap items-center justify-between gap-2 shadow-sm animate-fadeIn">
           <div class="flex items-center gap-2 flex-wrap text-xs">
-            <span class="font-black text-amber-500 uppercase tracking-wider flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span>
-              ⚡ Filtrado Cruzado Activo (Power BI):
+            <span class="font-black text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-amber-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>Filtrado Cruzado Activo (Power BI):</span>
             </span>
 
             @if (filtroSectorActivo()) {
               <span class="px-2.5 py-1 rounded-full bg-amber-400 text-slate-900 font-bold flex items-center gap-1.5 shadow-xs">
-                <span>📍 Sector: {{ filtroSectorActivo() }}</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Sector: {{ filtroSectorActivo() }}</span>
                 <button (click)="limpiarFiltroSector()" class="hover:text-red-700 font-black cursor-pointer text-sm ml-0.5" title="Quitar filtro de sector">✕</button>
               </span>
             }
@@ -131,7 +137,10 @@ import { QuickEditModalComponent } from '../quick-edit-modal/quick-edit-modal.co
                   'bg-slate-800': filtroTriageActivo() === 'NEGRO'
                 }"
               >
-                <span>🏷️ Triage: {{ filtroTriageActivo() }}</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                <span>Triage: {{ filtroTriageActivo() }}</span>
                 <button (click)="limpiarFiltroTriage()" class="hover:opacity-75 font-black cursor-pointer text-sm ml-0.5" title="Quitar filtro de triage">✕</button>
               </span>
             }
@@ -139,7 +148,7 @@ import { QuickEditModalComponent } from '../quick-edit-modal/quick-edit-modal.co
 
           <button 
             (click)="limpiarTodosFiltros()"
-            class="text-xs font-bold text-amber-600 hover:text-amber-800 underline cursor-pointer"
+            class="text-xs font-bold text-amber-700 hover:text-amber-900 underline cursor-pointer"
           >
             Restablecer Vista Completa
           </button>
@@ -275,8 +284,11 @@ import { QuickEditModalComponent } from '../quick-edit-modal/quick-edit-modal.co
               [style.borderColor]="customizer.config().tema.colorBorde"
             >
               <div class="flex items-center justify-between mb-3">
-                <h4 class="text-xs font-bold uppercase tracking-wider text-[#07483b] flex items-center gap-1">
-                  <span>🍩</span>
+                <h4 class="text-xs font-bold uppercase tracking-wider text-[#07483b] flex items-center gap-1.5">
+                  <svg class="w-4 h-4 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                  </svg>
                   <span>Triage START</span>
                 </h4>
                 <span class="text-[10px] opacity-75 font-mono">Total: {{ triageStats().total }}</span>
@@ -382,8 +394,10 @@ import { QuickEditModalComponent } from '../quick-edit-modal/quick-edit-modal.co
             >
               <div>
                 <div class="flex items-center justify-between mb-3">
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-[#07483b] flex items-center gap-1">
-                    <span>📊</span>
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-[#07483b] flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
                     <span>Atenciones por Sector</span>
                   </h4>
                   <span class="text-[10px] text-amber-600 font-bold">Clic para filtrar</span>
@@ -433,8 +447,10 @@ import { QuickEditModalComponent } from '../quick-edit-modal/quick-edit-modal.co
             >
               <div>
                 <div class="flex items-center justify-between mb-3">
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-[#07483b] flex items-center gap-1">
-                    <span>📈</span>
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-[#07483b] flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
                     <span>Flujo Horario de Ingresos</span>
                   </h4>
                   <span class="text-[10px] font-mono text-emerald-700 font-bold">16h - 22h</span>
@@ -470,8 +486,10 @@ import { QuickEditModalComponent } from '../quick-edit-modal/quick-edit-modal.co
             >
               <div>
                 <div class="flex items-center justify-between mb-2">
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-[#07483b] flex items-center gap-1">
-                    <span>🎯</span>
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-[#07483b] flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
                     <span>Saturación Camillas ACV</span>
                   </h4>
                   <span class="text-[10px] font-mono font-bold" [style.color]="camillasStats().color">
@@ -517,7 +535,9 @@ import { QuickEditModalComponent } from '../quick-edit-modal/quick-edit-modal.co
         <div class="space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-bold tracking-wider uppercase flex items-center gap-1.5" [style.color]="customizer.config().tema.colorPrimario">
-              <span>📐</span>
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+              </svg>
               <span>Bloques Analíticos & Visualizaciones Personalizadas</span>
             </h3>
 
@@ -547,7 +567,19 @@ import { QuickEditModalComponent } from '../quick-edit-modal/quick-edit-modal.co
                 <div>
                   <div class="flex items-start justify-between gap-2 border-b pb-2" [style.borderColor]="customizer.config().tema.colorBorde">
                     <div class="flex items-center gap-2">
-                      <span class="text-lg">{{ widget.icono || '📌' }}</span>
+                      <div class="w-7 h-7 rounded-lg bg-[#07483b]/10 text-[#07483b] flex items-center justify-center flex-shrink-0">
+                        @if (widget.visualType === 'grafico_dona') {
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+                        } @else if (widget.visualType === 'grafico_barras') {
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        } @else if (widget.visualType === 'curva_tendencia') {
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                        } @else if (widget.visualType === 'gauge_radial') {
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        } @else {
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        }
+                      </div>
                       <div>
                         <h4 class="text-xs font-bold uppercase tracking-wider" [style.color]="customizer.config().tema.colorPrimario">
                           {{ widget.titulo }}
@@ -560,32 +592,33 @@ import { QuickEditModalComponent } from '../quick-edit-modal/quick-edit-modal.co
                       </div>
                     </div>
 
-                    <!-- CONTROLES TÁCTICOS POWER BI (Reordenar ⬆️ ⬇️, Ancho 📐, Editar ✏️, Eliminar ✕) -->
+                    <!-- CONTROLES TÁCTICOS POWER BI (Reordenar, Ancho, Editar, Eliminar) -->
                     @if (emergency.esSuperUsuario()) {
                       <div class="flex items-center gap-1">
                         <!-- Mover Arriba / Izquierda -->
                         <button 
                           (click)="customizer.moverWidget(widget.id, 'arriba')"
-                          class="p-1 px-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 cursor-pointer shadow-xs transition-all"
+                          class="p-1 px-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 cursor-pointer shadow-xs transition-all flex items-center justify-center"
                           title="Mover hacia arriba / izquierda"
                         >
-                          ⬆️
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
                         </button>
                         <!-- Mover Abajo / Derecha -->
                         <button 
                           (click)="customizer.moverWidget(widget.id, 'abajo')"
-                          class="p-1 px-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 cursor-pointer shadow-xs transition-all"
+                          class="p-1 px-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 cursor-pointer shadow-xs transition-all flex items-center justify-center"
                           title="Mover hacia abajo / derecha"
                         >
-                          ⬇️
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <!-- Ciclar Ancho de Columna (1 -> 2 -> 3 -> 1) -->
                         <button 
                           (click)="ciclarColSpan(widget)"
-                          class="p-1 px-1.5 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 cursor-pointer shadow-xs text-[10px] font-mono font-bold"
+                          class="p-1 px-1.5 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 cursor-pointer shadow-xs text-[10px] font-mono font-bold flex items-center gap-1"
                           title="Cambiar tamaño de columna (1 col, 2 col, ancho completo)"
                         >
-                          📐 {{ widget.colSpan || 1 }} Col
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                          <span>{{ widget.colSpan || 1 }} Col</span>
                         </button>
                         <!-- Editar Widget -->
                         <button 
@@ -858,9 +891,10 @@ import { QuickEditModalComponent } from '../quick-edit-modal/quick-edit-modal.co
               @if (filtroSectorActivo() || filtroTriageActivo()) {
                 <button 
                   (click)="limpiarTodosFiltros()"
-                  class="px-2 py-1 rounded bg-amber-400 text-slate-900 font-bold hover:bg-amber-300 cursor-pointer"
+                  class="px-2.5 py-1 rounded-lg bg-amber-400 text-slate-900 font-bold hover:bg-amber-300 cursor-pointer flex items-center gap-1 shadow-xs"
                 >
-                  ✕ Quitar Filtros
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                  <span>Quitar Filtros</span>
                 </button>
               }
 
@@ -1248,7 +1282,7 @@ export class DashboardComponent {
       tituloModal: 'Crear Bloque Visual (Power BI)',
       widgetTitulo: 'NUEVO BLOQUE ANALÍTICO',
       widgetContenido: 'Descripción o análisis del bloque',
-      widgetIcono: '📊',
+      widgetIcono: '',
       widgetVisualType: 'grafico_barras',
       widgetDataSource: 'sectores_atenciones',
       widgetColSpan: 1
@@ -1271,12 +1305,12 @@ export class DashboardComponent {
 
   simularAlerta() {
     if (!this.emergency.esSuperUsuario()) {
-      alert('🔒 ACCESO RESTRINGIDO: Solo los Super Usuarios (Puesto de Mando) pueden emitir una Alerta General.');
+      alert('ACCESO RESTRINGIDO: Solo los Super Usuarios (Puesto de Mando) pueden emitir una Alerta General.');
       return;
     }
 
     const confirmar = confirm(
-      '🚨 ¿ESTÁS SEGURO QUE DESEAS EMITIR UNA ALERTA GENERAL?\n\n' +
+      '¿ESTÁS SEGURO QUE DESEAS EMITIR UNA ALERTA GENERAL?\n\n' +
       '• Se activarán tonos de sirena tácticos.\n' +
       '• Se solicitará reporte de estado inmediato a todos los sectores operativos.\n\n' +
       '¿Proceder con la Alerta General?'
@@ -1284,7 +1318,7 @@ export class DashboardComponent {
 
     if (confirmar) {
       this.emergency.playTacticalAlertTone(950, 0.4);
-      this.emergency.mostrarNotificacion('🚨 ALERTA GENERAL EMITIDA: Todos los sectores en máxima alerta.', 'alerta');
+      this.emergency.mostrarNotificacion('ALERTA GENERAL EMITIDA: Todos los sectores en máxima alerta.', 'alerta');
     }
   }
 }

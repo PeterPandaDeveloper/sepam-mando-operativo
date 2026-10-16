@@ -41,43 +41,47 @@ export interface FirmaReporte {
             @if (emergency.esSuperUsuario()) {
               <button 
                 (click)="copiarResumen()"
-                class="px-3 py-1.5 rounded-lg bg-[#05372d] hover:bg-[#0b5948] text-white text-xs font-bold border border-emerald-400/40 cursor-pointer flex items-center gap-1 shadow-xs"
+                class="px-3 py-1.5 rounded-lg bg-[#05372d] hover:bg-[#0b5948] text-white text-xs font-bold border border-emerald-400/40 cursor-pointer flex items-center gap-1.5 shadow-xs"
                 title="Copiar texto para WhatsApp / COE / Intendencia"
               >
                 @if (copiado()) {
-                  <span class="text-emerald-300">✓ ¡Copiado!</span>
+                  <span class="text-emerald-300 font-bold">Copiado</span>
                 } @else {
-                  <span>📋 Copiar Resumen</span>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                  <span>Copiar Resumen</span>
                 }
               </button>
 
               <button 
                 (click)="db.descargarExcel()"
-                class="px-3 py-1.5 rounded-lg bg-teal-800 hover:bg-teal-700 text-white text-xs font-bold cursor-pointer flex items-center gap-1 shadow-xs border border-teal-400/40"
+                class="px-3 py-1.5 rounded-lg bg-teal-800 hover:bg-teal-700 text-white text-xs font-bold cursor-pointer flex items-center gap-1.5 shadow-xs border border-teal-400/40"
                 title="Descargar Libro Oficial Excel multi-hoja procesado por DuckDB"
               >
-                <span>📊 Descargar Excel (DuckDB)</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>Descargar Excel (DuckDB)</span>
               </button>
 
               <button 
                 (click)="descargarCSV()"
-                class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer flex items-center gap-1 shadow-xs"
+                class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer flex items-center gap-1.5 shadow-xs"
                 title="Descargar datos en formato CSV"
               >
-                <span>📥 Descargar CSV</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span>Descargar CSV</span>
               </button>
 
               <button 
                 (click)="imprimirReporte()"
-                class="px-3.5 py-1.5 rounded-lg bg-[#f59e0b] hover:bg-amber-600 text-black text-xs font-black cursor-pointer flex items-center gap-1 shadow-xs"
+                class="px-3.5 py-1.5 rounded-lg bg-[#f59e0b] hover:bg-amber-600 text-black text-xs font-black cursor-pointer flex items-center gap-1.5 shadow-xs"
                 title="Generar e imprimir versión oficial PDF"
               >
-                <span>🖨️ Generar PDF / Imprimir</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                <span>Generar PDF / Imprimir</span>
               </button>
             } @else {
               <!-- Badge informativo para usuarios no administradores (Solo Lectura) -->
               <div class="bg-[#05372d] border border-amber-400/40 px-3 py-1 rounded-lg flex items-center gap-1.5">
-                <span class="text-amber-400 text-xs">👁️</span>
+                <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                 <span class="text-[11px] font-bold text-amber-200">Solo Lectura (Generación oficial reservada a Admins)</span>
               </div>
             }
@@ -102,7 +106,8 @@ export interface FirmaReporte {
               [class.text-[#405c54]]="tipoReporte() !== 'medico'"
               class="px-3 py-1.5 rounded-lg cursor-pointer transition-all flex items-center gap-1.5 shadow-xs"
             >
-              <span>📄 1. Informe Médico Operativo (MSP / COE)</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>1. Informe Médico Operativo (MSP / COE)</span>
             </button>
             @if (emergency.esSuperUsuario()) {
               <button 
@@ -112,7 +117,8 @@ export interface FirmaReporte {
                 [class.text-[#405c54]]="tipoReporte() !== 'log'"
                 class="px-3 py-1.5 rounded-lg cursor-pointer transition-all flex items-center gap-1.5 shadow-xs"
               >
-                <span>🛡️ 2. Log de Auditoría & Trazabilidad (Admin)</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <span>2. Log de Auditoría & Trazabilidad (Admin)</span>
                 <span class="bg-amber-400 text-black text-[10px] px-1.5 py-0.2 rounded-full font-bold">
                   {{ emergency.logsAuditoria().length }}
                 </span>
@@ -124,7 +130,8 @@ export interface FirmaReporte {
                 [class.text-[#405c54]]="tipoReporte() !== 'duckdb'"
                 class="px-3 py-1.5 rounded-lg cursor-pointer transition-all flex items-center gap-1.5 shadow-xs"
               >
-                <span>🦆 3. Analítica DuckDB + SQLite WAL</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                <span>3. Analítica DuckDB + SQLite WAL</span>
                 <span class="bg-teal-400 text-black text-[10px] px-1.5 py-0.2 rounded-full font-bold">
                   {{ db.conectado() ? 'ONLINE' : 'LOCAL' }}
                 </span>
@@ -191,19 +198,19 @@ export interface FirmaReporte {
             </h4>
             <div class="grid grid-cols-4 gap-2 text-center font-mono">
               <div class="bg-red-50 border border-red-300 p-2 rounded-lg">
-                <span class="text-[10px] font-bold text-red-900 block">🔴 ROJO (Inmediato)</span>
+                <span class="text-[10px] font-bold text-red-900 block flex items-center justify-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-600 inline-block"></span> ROJO (Inmediato)</span>
                 <span class="text-lg font-black text-red-700">{{ contarTriage('ROJO') }}</span>
               </div>
               <div class="bg-amber-50 border border-amber-300 p-2 rounded-lg">
-                <span class="text-[10px] font-bold text-amber-900 block">🟡 AMARILLO (Urgente)</span>
+                <span class="text-[10px] font-bold text-amber-900 block flex items-center justify-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> AMARILLO (Urgente)</span>
                 <span class="text-lg font-black text-amber-700">{{ contarTriage('AMARILLO') }}</span>
               </div>
               <div class="bg-emerald-50 border border-emerald-300 p-2 rounded-lg">
-                <span class="text-[10px] font-bold text-emerald-900 block">🟢 VERDE (Leve)</span>
+                <span class="text-[10px] font-bold text-emerald-900 block flex items-center justify-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-600 inline-block"></span> VERDE (Leve)</span>
                 <span class="text-lg font-black text-emerald-700">{{ contarTriage('VERDE') }}</span>
               </div>
               <div class="bg-slate-100 border border-slate-300 p-2 rounded-lg">
-                <span class="text-[10px] font-bold text-slate-800 block">⚫ NEGRO (Fallecido)</span>
+                <span class="text-[10px] font-bold text-slate-800 block flex items-center justify-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-900 inline-block"></span> NEGRO (Fallecido)</span>
                 <span class="text-lg font-black text-slate-800">{{ contarTriage('NEGRO') }}</span>
               </div>
             </div>
@@ -297,7 +304,10 @@ export interface FirmaReporte {
             
             <div class="flex items-center justify-between print:hidden">
               <span class="text-[11px] font-bold text-[#405c54] uppercase tracking-wider flex items-center gap-1.5">
-                <span>✍️</span> Pie de Firmas de Responsabilidad Legal (Editable por Administrador):
+                <svg class="w-3.5 h-3.5 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                </svg>
+                Pie de Firmas de Responsabilidad Legal (Editable por Administrador):
               </span>
               @if (emergency.esSuperUsuario()) {
                 <button 
@@ -441,15 +451,17 @@ export interface FirmaReporte {
               <!-- Banner Tecnológico DuckDB + SQLite -->
               <div class="bg-white p-4 rounded-xl border-2 border-teal-600 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
-                  <div class="w-12 h-12 rounded-xl bg-teal-900 text-white flex items-center justify-center text-2xl shadow-inner font-mono">
-                    🦆
+                  <div class="w-12 h-12 rounded-xl bg-teal-900 text-white flex items-center justify-center shadow-inner">
+                    <svg class="w-6 h-6 text-teal-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                    </svg>
                   </div>
                   <div>
                     <div class="flex items-center gap-2">
                       <h4 class="text-sm font-black text-[#07483b]">Motor Analítico DuckDB 1.5 + SQLite WAL</h4>
                       <span class="text-[10px] px-2 py-0.5 rounded font-black uppercase"
                             [ngClass]="db.conectado() ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'">
-                        {{ db.conectado() ? '● SERVIDOR EN VIVO (8000)' : '○ MODO STANDBY LOCAL' }}
+                        {{ db.conectado() ? 'SERVIDOR EN VIVO (8000)' : 'MODO STANDBY LOCAL' }}
                       </span>
                     </div>
                     <p class="text-[11px] text-[#405c54]">
@@ -461,15 +473,21 @@ export interface FirmaReporte {
                 <div class="flex items-center gap-2">
                   <button 
                     (click)="db.cargarResumenDuckDB()" 
-                    class="px-3 py-1.5 rounded-lg bg-[#edece4] hover:bg-slate-200 text-xs font-bold text-[#07483b] border border-[#d2dfd8] cursor-pointer flex items-center gap-1"
+                    class="px-3 py-1.5 rounded-lg bg-[#edece4] hover:bg-slate-200 text-xs font-bold text-[#07483b] border border-[#d2dfd8] cursor-pointer flex items-center gap-1.5"
                   >
-                    <span>🔄 Recalcular</span>
+                    <svg class="w-3.5 h-3.5 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span>Recalcular</span>
                   </button>
                   <button 
                     (click)="db.descargarExcel()" 
-                    class="px-3 py-1.5 rounded-lg bg-teal-800 hover:bg-teal-700 text-white text-xs font-black cursor-pointer flex items-center gap-1 shadow-xs"
+                    class="px-3 py-1.5 rounded-lg bg-teal-800 hover:bg-teal-700 text-white text-xs font-black cursor-pointer flex items-center gap-1.5 shadow-xs"
                   >
-                    <span>📊 Exportar Excel (.xlsx)</span>
+                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span>Exportar Excel (.xlsx)</span>
                   </button>
                 </div>
               </div>
@@ -504,15 +522,19 @@ export interface FirmaReporte {
                   <!-- Sectores con DuckDB -->
                   <div class="bg-white p-4 rounded-xl border border-[#d2dfd8] shadow-xs">
                     <h5 class="text-xs font-black text-[#07483b] uppercase mb-3 flex items-center gap-1.5">
-                      <span>📍</span> Distribución por Sectores (Zonas de Calor)
+                      <svg class="w-3.5 h-3.5 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      </svg>
+                      Distribución por Sectores (Zonas de Calor)
                     </h5>
                     <div class="space-y-2">
                       @for (sec of res.sectores; track sec.sector_nombre) {
                         <div class="p-2.5 rounded-lg bg-[#f5f4ed] border border-[#d2dfd8] flex items-center justify-between text-xs">
                           <div>
                             <span class="font-bold text-[#0d2822] block">{{ sec.sector_nombre }}</span>
-                            <span class="text-[10px] text-[#648279]">
-                              {{ sec.criticos > 0 ? '⚠️ ' + sec.criticos + ' pacientes críticos (Rojo)' : '✓ Sin emergencias rojas' }}
+                            <span class="text-[10px]" [ngClass]="sec.criticos > 0 ? 'text-red-700 font-bold' : 'text-[#648279]'">
+                              {{ sec.criticos > 0 ? sec.criticos + ' pacientes críticos (Rojo)' : 'Sin emergencias rojas' }}
                             </span>
                           </div>
                           <span class="text-xs font-black px-2 py-0.5 rounded bg-teal-100 text-teal-900 border border-teal-300 font-mono">
@@ -526,16 +548,19 @@ export interface FirmaReporte {
                   <!-- Curva Horaria -->
                   <div class="bg-white p-4 rounded-xl border border-[#d2dfd8] shadow-xs">
                     <h5 class="text-xs font-black text-[#07483b] uppercase mb-3 flex items-center gap-1.5">
-                      <span>⏱️</span> Curva de Carga Horaria (Histograma)
+                      <svg class="w-3.5 h-3.5 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      Curva de Carga Horaria (Histograma)
                     </h5>
                     <div class="space-y-2">
                       @for (c of res.curva_horaria; track c.hora) {
                         <div class="p-2.5 rounded-lg bg-[#f5f4ed] border border-[#d2dfd8] flex items-center justify-between text-xs">
                           <span class="font-mono font-bold text-[#07483b]">{{ c.hora }} - {{ c.hora.replace(':00', ':59') }}</span>
                           <div class="flex items-center gap-2">
-                            @if (c.rojo > 0) { <span class="text-[10px] text-red-700 font-bold">🔴 {{ c.rojo }}</span> }
-                            @if (c.amarillo > 0) { <span class="text-[10px] text-amber-700 font-bold">🟡 {{ c.amarillo }}</span> }
-                            @if (c.verde > 0) { <span class="text-[10px] text-emerald-700 font-bold">🟢 {{ c.verde }}</span> }
+                            @if (c.rojo > 0) { <span class="text-[10px] text-red-700 font-bold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-600 inline-block"></span> {{ c.rojo }}</span> }
+                            @if (c.amarillo > 0) { <span class="text-[10px] text-amber-700 font-bold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span> {{ c.amarillo }}</span> }
+                            @if (c.verde > 0) { <span class="text-[10px] text-emerald-700 font-bold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600 inline-block"></span> {{ c.verde }}</span> }
                             <span class="font-black text-xs bg-slate-200 px-2 py-0.5 rounded font-mono">{{ c.total }}</span>
                           </div>
                         </div>
@@ -545,7 +570,11 @@ export interface FirmaReporte {
                 </div>
               } @else {
                 <div class="bg-white p-8 rounded-xl border border-[#d2dfd8] text-center space-y-2">
-                  <span class="text-3xl">🦆</span>
+                  <div class="w-12 h-12 mx-auto rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-teal-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                    </svg>
+                  </div>
                   <p class="text-xs font-bold text-[#07483b]">Cargando métricas columnares desde DuckDB...</p>
                   <p class="text-[11px] text-[#648279]">Asegúrate de que el servidor local de base de datos esté iniciado en el puerto 8000.</p>
                 </div>
@@ -671,21 +700,21 @@ export class ReportModalComponent {
 
   copiarResumen() {
     const e = this.emergency.evento();
-    const texto = `🚨 *REPORTE OFICIAL PREHOSPITALARIO - SEPAM ECUADOR*
-📅 Evento: ${e.nombre} (${e.ciudad} - ${e.fecha})
-👥 Administradores: Pedro Zavala / Sebastian Zavala / admin1
+    const texto = `*REPORTE OFICIAL PREHOSPITALARIO - SEPAM ECUADOR*
+Evento: ${e.nombre} (${e.ciudad} - ${e.fecha})
+Administradores: Pedro Zavala / Sebastian Zavala / admin1
 
-📊 *MÉTRICAS OPERATIVAS:*
+[MÉTRICAS OPERATIVAS]
 • Total Atenciones: ${this.totalAtenciones()}
 • Resueltas In Situ (Campo): ${this.totalInSitu()}
 • Atendidas en ACV (PMA 1 y 2): ${this.totalACV()}
 • Traslados a Hospitales (Ambulancias): ${this.totalHospital()}
 
-🩺 *TRIAGE START:*
-🔴 Rojo: ${this.contarTriage('ROJO')}
-🟡 Amarillo: ${this.contarTriage('AMARILLO')}
-🟢 Verde: ${this.contarTriage('VERDE')}
-⚫ Negro: ${this.contarTriage('NEGRO')}
+[TRIAGE START]
+• Rojo (Inmediato): ${this.contarTriage('ROJO')}
+• Amarillo (Urgente): ${this.contarTriage('AMARILLO')}
+• Verde (Leve): ${this.contarTriage('VERDE')}
+• Negro (Fallecido): ${this.contarTriage('NEGRO')}
 
 Informe consolidado cerrado satisfactoriamente.`;
 

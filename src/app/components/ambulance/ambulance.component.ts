@@ -21,7 +21,11 @@ import { Atencion, Ambulancia } from '../../models/emergency.model';
             <span class="text-xs text-[#648279] font-mono">Unidades Prehospitalarias & Derivación Hospitalaria</span>
           </div>
           <h2 class="text-xl md:text-2xl font-black text-[#0d2822] flex items-center gap-2">
-            <span>🚑 Recepción y Traslado en Ambulancia</span>
+            <svg class="w-6 h-6 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 11h3m-1.5-1.5v3"/>
+            </svg>
+            <span>Recepción y Traslado en Ambulancia</span>
           </h2>
           <p class="text-xs text-[#405c54] mt-1">
             Recepción de pacientes derivados desde terreno o desde el ACV. Gestión de alta en unidad móvil o derivación a Hospital/Casa de Salud.

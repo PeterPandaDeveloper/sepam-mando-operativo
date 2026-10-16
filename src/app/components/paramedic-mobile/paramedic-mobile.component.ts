@@ -101,7 +101,7 @@ import {
                   <svg class="w-6 h-6 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                   </svg>
-                  <span>🚨 Iniciar Atención</span>
+                  <span>Iniciar Atención</span>
                 </button>
               </div>
             } @else {
@@ -221,10 +221,10 @@ import {
                       class="w-full py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold flex items-center justify-between cursor-pointer transition-all"
                     >
                       <div class="flex items-center gap-2">
-                        <span>✓</span>
+                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                         <span>1) Alta In Situ (Resuelto en el lugar)</span>
                       </div>
-                      <span class="text-[10px] text-emerald-700">Con medicación</span>
+                      <span class="text-[10px] text-emerald-700 font-semibold">Con medicación</span>
                     </button>
 
                     <!-- Opción 2: Traslado a ACV 1 o ACV 2 -->
@@ -233,7 +233,7 @@ import {
                       class="w-full py-2.5 px-3 rounded-xl bg-[#07483b] hover:bg-[#0b5948] text-white text-xs font-bold flex items-center justify-between cursor-pointer transition-all shadow-xs"
                     >
                       <div class="flex items-center gap-2">
-                        <span>🏥</span>
+                        <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                         <span>2) Trasladar a Puesto Médico (ACV 1 / 2)</span>
                       </div>
                       <span class="text-[10px] text-emerald-200">Triage</span>
@@ -245,7 +245,7 @@ import {
                       class="w-full py-2.5 px-3 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white text-xs font-bold flex items-center justify-between cursor-pointer transition-all shadow-xs"
                     >
                       <div class="flex items-center gap-2">
-                        <span>🚑</span>
+                        <svg class="w-4 h-4 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l2 4v6a1 1 0 01-1 1h-1a2 2 0 11-4 0H8a2 2 0 11-4 0H3a1 1 0 01-1-1v-6l2-4h4m12 0l-2-4H6L4 7m4 0v4m0 0h4m-4 0H4"/></svg>
                         <span>3) Trasladar directo a Ambulancia</span>
                       </div>
                       <span class="text-[10px] text-cyan-200">Urgente</span>

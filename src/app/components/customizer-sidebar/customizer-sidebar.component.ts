@@ -17,7 +17,10 @@ import { EmergencyService } from '../../services/emergency.service';
         class="fixed left-0 top-1/3 z-50 bg-[#07483b] hover:bg-[#0b5948] text-white py-3 px-2 rounded-r-xl shadow-2xl border-y-2 border-r-2 border-[#f59e0b] cursor-pointer flex flex-col items-center gap-1.5 transition-all transform hover:translate-x-1"
         title="Abrir Menú de Personalización GUI en Tiempo Real"
       >
-        <span class="text-base animate-spin">⚙️</span>
+        <svg class="w-4 h-4 text-amber-300 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
         <span class="text-[10px] font-black uppercase tracking-widest [writing-mode:vertical-lr] rotate-180 text-amber-300">
           Personalizar GUI
         </span>
@@ -40,7 +43,9 @@ import { EmergencyService } from '../../services/emergency.service';
           <!-- Encabezado del Customizer -->
           <div class="p-4 bg-[#07483b] text-white flex items-center justify-between border-b border-[#05372d]">
             <div class="flex items-center gap-2">
-              <span class="text-lg">🎨</span>
+              <svg class="w-5 h-5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4 4 4 0 014-4h2a4 4 0 014 4 4 4 0 01-4 4H7zm0 0a4 4 0 004-4v-2.586a1 1 0 01.293-.707l6-6a1 1 0 011.414 0l2.586 2.586a1 1 0 010 1.414l-6 6a1 1 0 01-.707.293H11"/>
+              </svg>
               <div>
                 <h3 class="text-xs font-black uppercase tracking-wider text-amber-300">Editor GUI en Tiempo Real</h3>
                 <span class="text-[10px] text-emerald-200 block">Modo Super Usuario (WordPress GUI)</span>
@@ -61,9 +66,10 @@ import { EmergencyService } from '../../services/emergency.service';
               [class.bg-[#07483b]]="tab === 'estilos'"
               [class.text-white]="tab === 'estilos'"
               [class.text-[#405c54]]="tab !== 'estilos'"
-              class="px-2.5 py-1.5 rounded-lg whitespace-nowrap cursor-pointer transition-all"
+              class="px-2.5 py-1.5 rounded-lg whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5"
             >
-              🎨 Presets y Colores
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4 4 4 0 014-4h2a4 4 0 014 4 4 4 0 01-4 4H7zm0 0a4 4 0 004-4v-2.586a1 1 0 01.293-.707l6-6a1 1 0 011.414 0l2.586 2.586a1 1 0 010 1.414l-6 6a1 1 0 01-.707.293H11"/></svg>
+              <span>Presets y Colores</span>
             </button>
             <button 
               (click)="tab = 'textos'"
@@ -80,9 +86,10 @@ import { EmergencyService } from '../../services/emergency.service';
               [class.bg-[#07483b]]="tab === 'recuadros'"
               [class.text-white]="tab === 'recuadros'"
               [class.text-[#405c54]]="tab !== 'recuadros'"
-              class="px-2.5 py-1.5 rounded-lg whitespace-nowrap cursor-pointer transition-all"
+              class="px-2.5 py-1.5 rounded-lg whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5"
             >
-              📦 Recuadros
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+              <span>Recuadros</span>
             </button>
           </div>
 
@@ -371,7 +378,7 @@ import { EmergencyService } from '../../services/emergency.service';
                 <!-- Formulario para Agregar Nuevo Recuadro Personalizado -->
                 <div class="bg-white p-3.5 rounded-xl border border-[#d2dfd8] space-y-2.5 shadow-xs">
                   <label class="block text-[11px] font-bold text-[#07483b] uppercase">
-                    ➕ Agregar Nuevo Recuadro / Bloque:
+                    + Agregar Nuevo Recuadro / Bloque:
                   </label>
 
                   <div>
@@ -409,7 +416,7 @@ import { EmergencyService } from '../../services/emergency.service';
                     @for (w of customizer.config().recuadrosPersonalizados; track w.id) {
                       <div class="bg-white p-2.5 rounded-lg border border-[#d2dfd8] flex items-start justify-between gap-2 shadow-xs">
                         <div>
-                          <span class="font-bold text-[#0d2822] text-xs block">{{ w.icono }} {{ w.titulo }}</span>
+                          <span class="font-bold text-[#0d2822] text-xs block">{{ w.titulo }}</span>
                           <span class="text-[10px] text-[#648279] block truncate max-w-[200px]">{{ w.contenido }}</span>
                         </div>
                         <button 
@@ -434,13 +441,13 @@ import { EmergencyService } from '../../services/emergency.service';
               (click)="customizer.restaurarPorDefecto()"
               class="px-2.5 py-1.5 rounded-lg bg-[#edece4] hover:bg-slate-200 text-[#405c54] font-bold text-[11px] cursor-pointer"
             >
-              🔄 Restaurar
+              Restaurar
             </button>
             <button 
               (click)="guardarYNotificar()"
               class="px-4 py-1.5 rounded-lg bg-[#07483b] hover:bg-[#0b5948] text-white font-black text-xs uppercase tracking-wider cursor-pointer shadow-sm"
             >
-              💾 Guardar Cambios
+              Guardar Cambios
             </button>
           </div>
 
@@ -464,7 +471,7 @@ export class CustomizerSidebarComponent {
     this.customizer.agregarRecuadroPersonalizado(
       this.nuevoTituloRecuadro,
       this.nuevoContenidoRecuadro || 'Información operativa adicional.',
-      '📋'
+      ''
     );
     this.nuevoTituloRecuadro = '';
     this.nuevoContenidoRecuadro = '';

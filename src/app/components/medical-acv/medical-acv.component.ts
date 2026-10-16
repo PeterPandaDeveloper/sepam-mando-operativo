@@ -21,7 +21,8 @@ import { Atencion, TriageColor, SignosVitales, ACV } from '../../models/emergenc
             <span class="text-xs text-[#648279] font-mono">Clasificación START & Estabilización de Víctimas</span>
           </div>
           <h2 class="text-xl md:text-2xl font-black text-[#0d2822] flex items-center gap-2">
-            <span>🏥 Módulo de Atención de Víctimas (ACV)</span>
+            <svg class="w-6 h-6 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            <span>Módulo de Atención de Víctimas (ACV)</span>
           </h2>
           <p class="text-xs text-[#405c54] mt-1">
             Puestos médicos de concentración. Recepción, Triage START, anamnesis con cédula y derivación a ambulancia.
@@ -387,19 +388,21 @@ import { Atencion, TriageColor, SignosVitales, ACV } from '../../models/emergenc
                 (click)="finalizarCaso('OBSERVACION')"
                 class="py-3 px-4 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold uppercase cursor-pointer"
               >
-                ⏳ Dejar en Observación ACV
+                Dejar en Observación ACV
               </button>
               <button 
                 (click)="finalizarCaso('ALTA_ACV')"
-                class="py-3 px-4 rounded-xl bg-[#07483b] hover:bg-[#0b5948] text-white text-xs font-black uppercase cursor-pointer shadow-md"
+                class="py-3 px-4 rounded-xl bg-[#07483b] hover:bg-[#0b5948] text-white text-xs font-black uppercase cursor-pointer shadow-md flex items-center justify-center gap-1.5"
               >
-                ✓ Dar Alta en ACV
+                <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                <span>Dar Alta en ACV</span>
               </button>
               <button 
                 (click)="finalizarCaso('TRASLADO_AMBULANCIA')"
-                class="py-3 px-4 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white text-xs font-bold uppercase cursor-pointer shadow-md"
+                class="py-3 px-4 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white text-xs font-bold uppercase cursor-pointer shadow-md flex items-center justify-center gap-1.5"
               >
-                🚑 Derivar a Ambulancia
+                <svg class="w-4 h-4 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l2 4v6a1 1 0 01-1 1h-1a2 2 0 11-4 0H8a2 2 0 11-4 0H3a1 1 0 01-1-1v-6l2-4h4m12 0l-2-4H6L4 7m4 0v4m0 0h4m-4 0H4"/></svg>
+                <span>Derivar a Ambulancia</span>
               </button>
             </div>
           </div>

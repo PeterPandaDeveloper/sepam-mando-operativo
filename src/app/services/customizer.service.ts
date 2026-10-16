@@ -244,7 +244,7 @@ export class CustomizerService {
       titulo: 'Distribución de Triage START',
       contenido: 'Proporción y volumen en vivo por código de gravedad',
       colorBorde: '#07483b',
-      icono: '🍩',
+      icono: '',
       visualType: 'grafico_dona',
       dataSource: 'triage_distribucion',
       colSpan: 1
@@ -254,7 +254,7 @@ export class CustomizerService {
       titulo: 'Atenciones por Sector / Zona',
       contenido: 'Comparativa de emergencias registradas en cada zona',
       colorBorde: '#f59e0b',
-      icono: '📊',
+      icono: '',
       visualType: 'grafico_barras',
       dataSource: 'sectores_atenciones',
       colSpan: 1
@@ -264,7 +264,7 @@ export class CustomizerService {
       titulo: 'Curva Horaria de Ingresos',
       contenido: 'Tendencia temporal de atenciones durante el concierto',
       colorBorde: '#0284c7',
-      icono: '📈',
+      icono: '',
       visualType: 'curva_tendencia',
       dataSource: 'curva_horaria',
       colSpan: 1
@@ -274,7 +274,7 @@ export class CustomizerService {
       titulo: 'Capacidad de Camillas ACV 1 y 2',
       contenido: 'Saturación en tiempo real de los Puestos Médicos Avanzados',
       colorBorde: '#10b981',
-      icono: '🎯',
+      icono: '',
       visualType: 'gauge_radial',
       dataSource: 'capacidad_camillas',
       colSpan: 1
@@ -282,9 +282,9 @@ export class CustomizerService {
     {
       id: 'w-consigna',
       titulo: 'Consigna Operativa del Mando (PMU)',
-      contenido: '🚨 PROTOCOLO OPERATIVO ACTIVO:\n• Prioridad Alfa en ZONA C (Foso y Escenario).\n• Despacho de ambulancia ALFA-01 exclusivo para ACV 1.\n• Reporte de signos vitales cada 15 min.',
+      contenido: 'PROTOCOLO OPERATIVO ACTIVO:\n• Prioridad Alfa en ZONA C (Foso y Escenario).\n• Despacho de ambulancia ALFA-01 exclusivo para ACV 1.\n• Reporte de signos vitales cada 15 min.',
       colorBorde: '#07483b',
-      icono: '📝',
+      icono: '',
       visualType: 'texto_markdown',
       dataSource: 'manual',
       colSpan: 2
@@ -295,7 +295,7 @@ export class CustomizerService {
     tema: { ...this.presets['beige-verde'] },
     textos: {
       nombreInstitucion: 'SEPAM SISTEMA DE MANDO',
-      subtituloHeader: 'ECUADOR 🇪🇨',
+      subtituloHeader: 'ECUADOR',
       nombreEvento: 'CONCIERTO CHINO Y NACHO',
       ciudadSede: 'QUITO',
       lugarRecinto: 'Estadio Olímpico Atahualpa',
@@ -394,7 +394,7 @@ export class CustomizerService {
   agregarRecuadroPersonalizado(
     titulo: string, 
     contenido: string, 
-    icono: string = '📌',
+    icono: string = '',
     visualType: VisualType = 'texto_markdown',
     dataSource: VisualDataSource = 'manual',
     colSpan: 1 | 2 | 3 = 1
@@ -538,7 +538,7 @@ export class CustomizerService {
       tema: { ...this.presets['beige-verde'] },
       textos: {
         nombreInstitucion: 'SEPAM SISTEMA DE MANDO',
-        subtituloHeader: 'ECUADOR 🇪🇨',
+        subtituloHeader: 'ECUADOR',
         nombreEvento: 'CONCIERTO CHINO Y NACHO',
         ciudadSede: 'QUITO',
         lugarRecinto: 'Estadio Olímpico Atahualpa',
@@ -567,9 +567,18 @@ export class CustomizerService {
         const parsed = JSON.parse(guardada);
         if (!parsed.recuadrosPersonalizados || parsed.recuadrosPersonalizados.length === 0) {
           parsed.recuadrosPersonalizados = [...this.widgetsPorDefecto];
+        } else {
+          parsed.recuadrosPersonalizados.forEach((w: any) => {
+            if (w.icono && /[\uD83C-\uDBFF\uDC00-\uDFFF]/.test(w.icono)) {
+              w.icono = '';
+            }
+          });
         }
         if (!parsed.kpis || parsed.kpis.length === 0) {
           parsed.kpis = [...this.kpisPorDefecto];
+        }
+        if (parsed.textos && parsed.textos.subtituloHeader) {
+          parsed.textos.subtituloHeader = parsed.textos.subtituloHeader.replace(/[\uD83C-\uDBFF\uDC00-\uDFFF]/g, '').trim();
         }
         this.config.set(parsed);
       }
