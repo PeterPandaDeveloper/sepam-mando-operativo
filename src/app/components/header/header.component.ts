@@ -50,7 +50,7 @@ import { AccessAuthService } from '../../services/access-auth.service';
               <img 
                 src="logo-sepam.png" 
                 alt="SEPAM Ecuador" 
-                class="w-11 h-11 rounded-full border-2 border-[#f59e0b] shadow-md object-contain bg-black"
+                class="w-11 h-11 object-contain drop-shadow-md"
               />
               <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 rounded-full" [style.borderColor]="customizer.config().tema.colorHeader"></span>
             </div>

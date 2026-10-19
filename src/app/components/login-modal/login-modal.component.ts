@@ -14,7 +14,7 @@ import { EmergencyService } from '../../services/emergency.service';
         <!-- Header del Modal -->
         <div class="p-5 border-b border-[#05372d] bg-[#07483b] text-white flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <img src="logo-sepam.png" alt="SEPAM" class="w-10 h-10 rounded-full border-2 border-[#f59e0b] bg-black object-contain"/>
+            <img src="logo-sepam.png" alt="SEPAM" class="w-10 h-10 object-contain drop-shadow-sm"/>
             <div>
               <h3 class="text-sm font-black tracking-wide">Acceso al Sistema SEPAM</h3>
               <p class="text-[11px] text-emerald-100">Puesto de Mando y Operación Prehospitalaria</p>

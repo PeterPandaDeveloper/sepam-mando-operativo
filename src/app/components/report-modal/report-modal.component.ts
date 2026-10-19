@@ -25,7 +25,7 @@ export interface FirmaReporte {
         <!-- Header del Modal (Oculto al imprimir si se desea) -->
         <div class="p-4 border-b border-[#05372d] flex items-center justify-between bg-[#07483b] text-white print:bg-white print:text-black print:border-b-2 print:border-black">
           <div class="flex items-center gap-3">
-            <img src="logo-sepam.png" alt="SEPAM" class="w-10 h-10 rounded-full border-2 border-[#f59e0b] bg-black object-contain"/>
+            <img src="logo-sepam.png" alt="SEPAM" class="w-10 h-10 object-contain drop-shadow-sm"/>
             <div>
               <h3 class="text-sm sm:text-base font-black tracking-wide print:text-lg">
                 INFORME CONSOLIDADO DE ATENCIÓN PREHOSPITALARIA
