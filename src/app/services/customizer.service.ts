@@ -9,7 +9,7 @@ export interface ThemeConfig {
   colorTarjeta: string;
   colorTarjetaSecundaria: string;
   colorBorde: string;
-  colorPrimario: string; // Botones y acentos principales
+  colorPrimario: string;
   colorPrimarioHover: string;
   colorTexto: string;
   colorTextoSecundario: string;
@@ -35,12 +35,13 @@ export type VisualDataSource =
 export interface CustomWidget {
   id: string;
   titulo: string;
+  subtitulo?: string;
   contenido: string;
   colorBorde: string;
   icono: string;
   visualType?: VisualType;
   dataSource?: VisualDataSource;
-  colSpan?: 1 | 2 | 3; // 1 = 1 Columna (33%), 2 = 2 Columnas (66%), 3 = Ancho Completo (100%)
+  colSpan?: 1 | 2 | 3; // 1 = 33%, 2 = 66%, 3 = 100% Ancho Completo
   orden?: number;
 }
 
@@ -71,6 +72,7 @@ export interface AppConfig {
   visibilidad: {
     bannerEvento: boolean;
     tarjetasKPI: boolean;
+    lienzoPowerBI: boolean;
     sectoresOperativos: boolean;
     tablaActividad: boolean;
     graficaTriage: boolean;
@@ -87,8 +89,16 @@ export class CustomizerService {
 
   private get baseUrl(): string {
     if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const serverParam = params.get('server');
+      if (serverParam) {
+        localStorage.setItem('sepam_server_host', serverParam.trim());
+        return serverParam.trim();
+      }
+      const savedHost = localStorage.getItem('sepam_server_host');
+      if (savedHost) return savedHost;
       if (window.location.protocol === 'capacitor:' || window.location.protocol === 'file:') {
-        return 'https://sepam-mando-operativo.vercel.app';
+        return 'http://192.168.137.1:8000';
       }
       if (window.location.port === '4200') {
         return `http://${window.location.hostname}:8000`;
@@ -97,7 +107,6 @@ export class CustomizerService {
     return '';
   }
 
-  // 7 Presets profesionales preconfigurados
   presets: Record<string, ThemeConfig> = {
     'beige-verde': {
       nombrePreset: 'Clínico Beige & Verde (Oficial SEPAM)',
@@ -192,12 +201,11 @@ export class CustomizerService {
     }
   };
 
-  // KPIs iniciales por defecto (editables, ampliables y eliminables)
   kpisPorDefecto: DynamicKpi[] = [
     {
       id: 'kpi-personal',
-      titulo: 'PERSONAL OPERATIVO',
-      badgeTexto: 'LIVE',
+      titulo: 'PERSONAL EN TERRENO',
+      badgeTexto: 'ACTIVO',
       badgeColor: 'emerald',
       tipoValor: 'metrica_personal',
       subtitulo1: 'disponibles',
@@ -206,43 +214,43 @@ export class CustomizerService {
     },
     {
       id: 'kpi-atenciones',
-      titulo: 'ATENCIONES ACTIVAS',
-      badgeTexto: 'EN TERRENO',
+      titulo: 'PACIENTES ATENDIDOS',
+      badgeTexto: 'FILTRABLE',
       badgeColor: 'amber',
       tipoValor: 'metrica_atenciones',
-      subtitulo1: 'Registradas en vivo',
-      subtitulo2: 'Atendidas en campo',
-      colorValor: '#f59e0b'
+      subtitulo1: 'Según filtro actual',
+      subtitulo2: 'En seguimiento',
+      colorValor: '#d97706'
     },
     {
       id: 'kpi-traslados',
-      titulo: 'TRASLADOS AL ACV',
-      badgeTexto: 'RUMBO ACV',
+      titulo: 'RUMBO A PUESTO MÉDICO',
+      badgeTexto: 'ACV 1 y 2',
       badgeColor: 'cyan',
       tipoValor: 'metrica_traslados',
-      subtitulo1: 'Camilla / Ambulancia',
-      subtitulo2: 'Derivados a PMA',
-      colorValor: '#06b6d4'
+      subtitulo1: 'En camilla o silla',
+      subtitulo2: 'Para clasificación',
+      colorValor: '#0284c7'
     },
     {
-      id: 'kpi-apoyos',
-      titulo: 'APOYOS SOLICITADOS',
-      badgeTexto: 'RADIAL',
-      badgeColor: 'purple',
-      tipoValor: 'manual',
-      valorManual: '00',
-      subtitulo1: 'Sin novedades',
-      subtitulo2: '0 Solicitudes',
-      colorValor: '#8b5cf6'
+      id: 'kpi-ambulancias',
+      titulo: 'AMBULANCIAS LISTAS',
+      badgeTexto: 'FLOTA MÓVIL',
+      badgeColor: 'red',
+      tipoValor: 'metrica_ambulancias',
+      subtitulo1: 'Unidades operativas',
+      subtitulo2: 'Traslado hospitalario',
+      colorValor: '#dc2626'
     }
   ];
 
-  // Widgets visuales iniciales estilo Power BI (Gráficas interactivas, medidores y notas)
+  // Lienzo inicial estilo Power BI (Gráficos vectoriales interactivos)
   widgetsPorDefecto: CustomWidget[] = [
     {
       id: 'w-triage-donut',
-      titulo: 'Distribución de Triage START',
-      contenido: 'Proporción y volumen en vivo por código de gravedad',
+      titulo: 'Gravedad de Pacientes (Triage START)',
+      subtitulo: 'Toca un color para filtrar toda la pantalla',
+      contenido: 'Proporción en vivo según prioridad médica',
       colorBorde: '#07483b',
       icono: '',
       visualType: 'grafico_dona',
@@ -251,8 +259,9 @@ export class CustomizerService {
     },
     {
       id: 'w-sector-bars',
-      titulo: 'Atenciones por Sector / Zona',
-      contenido: 'Comparativa de emergencias registradas en cada zona',
+      titulo: 'Emergencias por Zona del Evento',
+      subtitulo: 'Toca una barra para ver solo esa zona',
+      contenido: 'Comparativa de carga operativa por ubicación',
       colorBorde: '#f59e0b',
       icono: '',
       visualType: 'grafico_barras',
@@ -260,19 +269,10 @@ export class CustomizerService {
       colSpan: 1
     },
     {
-      id: 'w-hourly-spark',
-      titulo: 'Curva Horaria de Ingresos',
-      contenido: 'Tendencia temporal de atenciones durante el concierto',
-      colorBorde: '#0284c7',
-      icono: '',
-      visualType: 'curva_tendencia',
-      dataSource: 'curva_horaria',
-      colSpan: 1
-    },
-    {
       id: 'w-beds-gauge',
-      titulo: 'Capacidad de Camillas ACV 1 y 2',
-      contenido: 'Saturación en tiempo real de los Puestos Médicos Avanzados',
+      titulo: 'Ocupación de Camillas (ACV 1 y 2)',
+      subtitulo: 'Capacidad disponible en carpas médicas',
+      contenido: 'Medidor de saturación de puestos médicos',
       colorBorde: '#10b981',
       icono: '',
       visualType: 'gauge_radial',
@@ -280,14 +280,26 @@ export class CustomizerService {
       colSpan: 1
     },
     {
+      id: 'w-hourly-spark',
+      titulo: 'Evolución de Ingresos por Hora y Causa',
+      subtitulo: 'Toca un motivo clínico para filtrar pacientes',
+      contenido: 'Tendencia horaria y principales diagnósticos',
+      colorBorde: '#0284c7',
+      icono: '',
+      visualType: 'curva_tendencia',
+      dataSource: 'curva_horaria',
+      colSpan: 2
+    },
+    {
       id: 'w-consigna',
-      titulo: 'Consigna Operativa del Mando (PMU)',
-      contenido: 'PROTOCOLO OPERATIVO ACTIVO:\n• Prioridad Alfa en ZONA C (Foso y Escenario).\n• Despacho de ambulancia ALFA-01 exclusivo para ACV 1.\n• Reporte de signos vitales cada 15 min.',
+      titulo: 'Avisos e Instrucciones del Mando',
+      subtitulo: 'Notas importantes para supervisores',
+      contenido: '• Prioridad máxima en Zona C (Escenario y Foso).\n• Ambulancia ALFA-01 lista en Puerta Norte.\n• Para emergencias críticas presionar botón rojo superior.',
       colorBorde: '#07483b',
       icono: '',
       visualType: 'texto_markdown',
       dataSource: 'manual',
-      colSpan: 2
+      colSpan: 1
     }
   ];
 
@@ -306,6 +318,7 @@ export class CustomizerService {
     visibilidad: {
       bannerEvento: true,
       tarjetasKPI: true,
+      lienzoPowerBI: true,
       sectoresOperativos: true,
       tablaActividad: true,
       graficaTriage: true
@@ -314,18 +327,15 @@ export class CustomizerService {
     recuadrosPersonalizados: [...this.widgetsPorDefecto]
   });
 
-  // Estado del menú flotante izquierdo
   sidebarAbierto = signal(false);
 
   constructor() {
     this.cargarConfiguracionGuardada();
 
-    // Efecto reactivo para aplicar variables CSS en tiempo real al DOM (:root y body)
     effect(() => {
       this.aplicarVariablesCSS(this.config().tema);
     });
 
-    // Cargar sincronización desde servidor si está disponible
     this.cargarDesdeServidor();
   }
 
@@ -389,19 +399,21 @@ export class CustomizerService {
     this.guardarEnServidor();
   }
 
-  // --- MÉTODOS DEL VISUAL BUILDER (Power BI / Grafana) ---
+  // --- MÉTODOS LEGO / POWER BI BUILDER ---
 
   agregarRecuadroPersonalizado(
     titulo: string, 
     contenido: string, 
     icono: string = '',
-    visualType: VisualType = 'texto_markdown',
-    dataSource: VisualDataSource = 'manual',
-    colSpan: 1 | 2 | 3 = 1
+    visualType: VisualType = 'grafico_dona',
+    dataSource: VisualDataSource = 'triage_distribucion',
+    colSpan: 1 | 2 | 3 = 1,
+    subtitulo: string = 'Interactivo en tiempo real'
   ) {
     const nuevo: CustomWidget = {
       id: `w-${Date.now().toString(36)}`,
       titulo,
+      subtitulo,
       contenido,
       colorBorde: this.config().tema.colorPrimario,
       icono,
@@ -421,6 +433,46 @@ export class CustomizerService {
     this.config.update(c => ({
       ...c,
       recuadrosPersonalizados: c.recuadrosPersonalizados.map(w => w.id === id ? { ...w, ...cambios } : w)
+    }));
+    this.guardarEnLocalStorage();
+    this.guardarEnServidor();
+  }
+
+  // Permite cambiar el tipo de gráfico con 1 solo clic desde la tarjeta (estilo Power BI)
+  rotarTipoVisualWidget(id: string) {
+    const ordenTipos: VisualType[] = [
+      'grafico_dona',
+      'grafico_barras',
+      'curva_tendencia',
+      'gauge_radial',
+      'texto_markdown'
+    ];
+    this.config.update(c => ({
+      ...c,
+      recuadrosPersonalizados: c.recuadrosPersonalizados.map(w => {
+        if (w.id === id) {
+          const actualIdx = ordenTipos.indexOf(w.visualType || 'grafico_dona');
+          const sigTipo = ordenTipos[(actualIdx + 1) % ordenTipos.length];
+          return { ...w, visualType: sigTipo };
+        }
+        return w;
+      })
+    }));
+    this.guardarEnLocalStorage();
+    this.guardarEnServidor();
+  }
+
+  // Permite redimensionar el ancho del bloque (1/3 -> 2/3 -> 100%) con 1 clic
+  rotarTamanoWidget(id: string) {
+    this.config.update(c => ({
+      ...c,
+      recuadrosPersonalizados: c.recuadrosPersonalizados.map(w => {
+        if (w.id === id) {
+          const nextSpan = w.colSpan === 1 ? 2 : (w.colSpan === 2 ? 3 : 1);
+          return { ...w, colSpan: nextSpan as 1 | 2 | 3 };
+        }
+        return w;
+      })
     }));
     this.guardarEnLocalStorage();
     this.guardarEnServidor();
@@ -462,7 +514,7 @@ export class CustomizerService {
     this.editarRecuadroPersonalizado(id, { colSpan });
   }
 
-  // --- MÉTODOS PARA GESTIÓN DE KPIS ---
+  // --- GESTIÓN DE KPIS ---
 
   agregarKpi(kpi: Omit<DynamicKpi, 'id'>) {
     const id = `kpi-${Date.now().toString(36)}`;
@@ -484,6 +536,22 @@ export class CustomizerService {
     this.guardarEnServidor();
   }
 
+  moverKpi(id: string, direccion: 'izq' | 'der') {
+    this.config.update(c => {
+      const lista = [...(c.kpis || [])];
+      const idx = lista.findIndex(k => k.id === id);
+      if (idx === -1) return c;
+      const targetIdx = direccion === 'izq' ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= lista.length) return c;
+      const temp = lista[idx];
+      lista[idx] = lista[targetIdx];
+      lista[targetIdx] = temp;
+      return { ...c, kpis: lista };
+    });
+    this.guardarEnLocalStorage();
+    this.guardarEnServidor();
+  }
+
   eliminarKpi(id: string) {
     this.config.update(c => ({
       ...c,
@@ -492,8 +560,6 @@ export class CustomizerService {
     this.guardarEnLocalStorage();
     this.guardarEnServidor();
   }
-
-  // --- PERSISTENCIA HÍBRIDA (LOCAL + SERVIDOR MULTI-PANTALLA) ---
 
   guardarEnLocalStorage() {
     try {
@@ -520,9 +586,11 @@ export class CustomizerService {
       this.http.get<AppConfig | null>(`${this.baseUrl}/api/config-ui`).subscribe({
         next: (serverConfig) => {
           if (serverConfig && serverConfig.tema) {
-            // Unir widgets predeterminados si faltan
             if (!serverConfig.recuadrosPersonalizados || serverConfig.recuadrosPersonalizados.length === 0) {
               serverConfig.recuadrosPersonalizados = [...this.widgetsPorDefecto];
+            }
+            if (serverConfig.visibilidad && serverConfig.visibilidad.lienzoPowerBI === undefined) {
+              serverConfig.visibilidad.lienzoPowerBI = true;
             }
             this.config.set(serverConfig);
             this.guardarEnLocalStorage();
@@ -549,6 +617,7 @@ export class CustomizerService {
       visibilidad: {
         bannerEvento: true,
         tarjetasKPI: true,
+        lienzoPowerBI: true,
         sectoresOperativos: true,
         tablaActividad: true,
         graficaTriage: true
@@ -567,24 +636,16 @@ export class CustomizerService {
         const parsed = JSON.parse(guardada);
         if (!parsed.recuadrosPersonalizados || parsed.recuadrosPersonalizados.length === 0) {
           parsed.recuadrosPersonalizados = [...this.widgetsPorDefecto];
-        } else {
-          parsed.recuadrosPersonalizados.forEach((w: any) => {
-            if (w.icono && /[\uD83C-\uDBFF\uDC00-\uDFFF]/.test(w.icono)) {
-              w.icono = '';
-            }
-          });
         }
         if (!parsed.kpis || parsed.kpis.length === 0) {
           parsed.kpis = [...this.kpisPorDefecto];
         }
-        if (parsed.textos && parsed.textos.subtituloHeader) {
-          parsed.textos.subtituloHeader = parsed.textos.subtituloHeader.replace(/[\uD83C-\uDBFF\uDC00-\uDFFF]/g, '').trim();
+        if (parsed.visibilidad && parsed.visibilidad.lienzoPowerBI === undefined) {
+          parsed.visibilidad.lienzoPowerBI = true;
         }
         this.config.set(parsed);
       }
-    } catch {
-      // Usar valores por defecto
-    }
+    } catch {}
   }
 
   private aplicarVariablesCSS(tema: ThemeConfig) {

@@ -604,7 +604,7 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
               <div class="flex flex-col sm:flex-row items-center gap-6">
                 <div class="p-2.5 bg-white rounded-2xl shadow-md border-2 border-[#07483b]/20 flex-shrink-0">
                   <img 
-                    [src]="network.qrOficial" 
+                    [src]="network.qrOficial()" 
                     alt="Código QR Oficial"
                     class="w-48 h-48 sm:w-52 sm:h-52 object-contain"
                   />
@@ -619,11 +619,11 @@ import { Paramedico, Sector, ACV, Ambulancia, SuperUsuario } from '../../models/
                       <input 
                         type="text" 
                         readonly 
-                        [value]="network.urlOficial"
+                        [value]="network.urlOficial()"
                         class="bg-transparent text-[#07483b] font-mono text-xs font-bold w-full focus:outline-none"
                       />
                       <button 
-                        (click)="copiarUrlAdmin(network.urlOficial)"
+                        (click)="copiarUrlAdmin(network.urlOficial())"
                         class="px-3 py-1.5 rounded bg-[#07483b] hover:bg-[#0d2822] text-white font-bold cursor-pointer text-xs flex-shrink-0 transition-all active:scale-95"
                       >
                         Copiar Enlace

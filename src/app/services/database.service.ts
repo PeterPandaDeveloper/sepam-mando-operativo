@@ -69,8 +69,26 @@ export class DatabaseService implements OnDestroy {
 
   // Determinar URL del backend dinámicamente (en Vercel / Cloud usa proxy relativo '')
   private get baseUrl(): string {
-    if (typeof window !== 'undefined' && window.location.port === '4200') {
-      return `http://${window.location.hostname}:8000`;
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const serverParam = params.get('server');
+      if (serverParam) {
+        localStorage.setItem('sepam_server_host', serverParam.trim());
+        return serverParam.trim();
+      }
+
+      const savedHost = localStorage.getItem('sepam_server_host');
+      if (savedHost) {
+        return savedHost;
+      }
+
+      if (window.location.protocol === 'capacitor:' || window.location.protocol === 'file:') {
+        return 'http://192.168.137.1:8000';
+      }
+
+      if (window.location.port === '4200') {
+        return `http://${window.location.hostname}:8000`;
+      }
     }
     return '';
   }

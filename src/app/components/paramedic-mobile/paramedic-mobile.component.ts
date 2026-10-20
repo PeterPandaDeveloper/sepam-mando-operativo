@@ -1,11 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EmergencyService } from '../../services/emergency.service';
 import { 
   MotivoAtencion, 
   MedioTraslado, 
-  CondicionAparente, 
   Atencion 
 } from '../../models/emergency.model';
 
@@ -16,172 +15,250 @@ import {
   template: `
     <div class="w-full max-w-xl mx-auto py-2 px-2 sm:px-4">
       
-      <!-- Contenedor Nativo Táctico de Brigadista -->
-      <div class="w-full bg-[#f5f4ed] border-2 border-[#07483b] rounded-2xl shadow-xl overflow-hidden relative text-[#0d2822] flex flex-col min-h-[750px]">
+      <!-- Contenedor Táctico de Pantalla Completa para APK / Móvil -->
+      <div class="w-full bg-[#f5f4ed] border-2 border-[#07483b] rounded-2xl shadow-xl overflow-hidden relative text-[#0d2822] flex flex-col min-h-[760px]">
         
-        <!-- Barra de Estado Operativo Táctico -->
-        <div class="px-4 py-2 flex items-center justify-between text-xs text-[#405c54] border-b border-[#d2dfd8] bg-[#edece4]">
-          <div class="flex items-center gap-1.5 font-mono font-bold text-[#07483b]">
-            <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-            <span>SEPAM MÓVIL BRIGADISTAS</span>
+        <!-- Barra Superior de Estado y Cola Offline -->
+        <div class="px-4 py-2.5 flex items-center justify-between text-xs text-[#405c54] border-b border-[#d2dfd8] bg-[#edece4]">
+          <div class="flex items-center gap-2 font-mono font-bold text-[#07483b]">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse"></span>
+            <span>TERMINAL MÓVIL DE BRIGADISTA</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full font-mono font-bold">
-              EN VIVO
-            </span>
+            @if (emergency.pendientesOffline() > 0) {
+              <span class="text-[10px] bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full font-mono font-bold animate-pulse">
+                {{ emergency.pendientesOffline() }} guardados en móvil (Sincronizando...)
+              </span>
+            } @else {
+              <span class="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full font-mono font-bold">
+                CONECTADO AL PMU
+              </span>
+            }
           </div>
         </div>
 
-        <!-- Encabezado de la App del Paramédico (Verde Bosque) -->
+        <!-- Encabezado del Brigadista Activo -->
         <div class="p-4 bg-[#07483b] text-white flex items-center justify-between shadow-sm">
-          <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-full bg-white/20 border border-white/40 flex items-center justify-center text-white font-black text-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-white/20 border border-white/40 flex items-center justify-center text-white font-black text-base">
               {{ emergency.paramedicoActivo().nombre.charAt(0) }}
             </div>
             <div>
-              <h2 class="text-xs font-black uppercase tracking-wider text-white">Atención en Terreno (Campo)</h2>
-              <span class="text-[11px] text-emerald-100 block">{{ emergency.paramedicoActivo().nombre }} ({{ emergency.paramedicoActivo().usuario }})</span>
+              <h2 class="text-xs font-black uppercase tracking-wider text-amber-300">Brigadista en Terreno</h2>
+              <span class="text-sm font-bold text-white block">{{ emergency.paramedicoActivo().nombre }}</span>
             </div>
           </div>
 
-          <div class="flex items-center gap-1.5 bg-[#05372d] px-2.5 py-1 rounded-full border border-emerald-400/30">
+          <div class="flex items-center gap-1.5 bg-[#05372d] px-3 py-1 rounded-full border border-emerald-400/30">
             <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
-            <span class="text-[11px] font-mono text-emerald-100 font-bold uppercase">
+            <span class="text-xs font-mono text-emerald-100 font-bold uppercase">
               {{ emergency.paramedicoActivo().estado }}
             </span>
           </div>
         </div>
 
-        <!-- CUERPO PRINCIPAL DEL MÓVIL (Beige #f5f4ed) -->
+        <!-- CUERPO OPERATIVO -->
         <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-[#f5f4ed]">
           
-          <!-- Selector Rápido de Paramédico (Sin contraseñas a la vista) -->
-          <div class="bg-white border border-[#d2dfd8] rounded-xl p-3 shadow-xs">
-            <div class="flex items-center justify-between text-xs mb-1.5">
-              <span class="text-[#648279] font-bold">Brigadista Activo en Dispositivo:</span>
-              <span class="text-[10px] text-emerald-800 font-mono bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-bold">
-                Sector: {{ emergency.paramedicoActivo().sectorNombre }}
+          <!-- Selector de Brigadista y Cambio Rápido de Ubicación -->
+          <div class="bg-white border border-[#d2dfd8] rounded-xl p-3.5 shadow-xs space-y-2.5">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-[#648279] font-bold uppercase text-[10px]">1. Tu Identidad en este Teléfono:</span>
+              <span class="text-[11px] text-emerald-900 font-mono bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-bold">
+                {{ emergency.paramedicoActivo().sectorNombre }}
               </span>
             </div>
             
-            <select 
-              [ngModel]="emergency.paramedicoActivo().id" 
-              (ngModelChange)="seleccionarParamedico($event)"
-              class="w-full bg-[#f5f4ed] text-[#07483b] border border-[#d2dfd8] rounded-lg p-2 text-xs font-bold focus:outline-none"
-            >
-              @for (p of emergency.personal(); track p.id) {
-                <option [value]="p.id">{{ p.usuario }} - {{ p.nombre }} ({{ p.sectorNombre }})</option>
-              }
-            </select>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <select 
+                [ngModel]="emergency.paramedicoActivo().id" 
+                (ngModelChange)="seleccionarParamedico($event)"
+                class="w-full bg-[#f5f4ed] text-[#07483b] border border-[#d2dfd8] rounded-lg p-2.5 text-xs font-bold focus:outline-none"
+              >
+                @for (p of emergency.personal(); track p.id) {
+                  <option [value]="p.id">{{ p.nombre }} ({{ p.usuario }})</option>
+                }
+              </select>
+
+              <select 
+                [ngModel]="emergency.paramedicoActivo().sectorActualId" 
+                (ngModelChange)="cambiarMiZona($event)"
+                class="w-full bg-[#edece4] text-[#0d2822] border border-[#d2dfd8] rounded-lg p-2.5 text-xs font-bold focus:outline-none"
+                title="Cambiar mi zona actual"
+              >
+                @for (sec of emergency.sectores(); track sec.id) {
+                  <option [value]="sec.id">Ubicado en: {{ sec.codigo }}</option>
+                }
+              </select>
+            </div>
           </div>
 
-          <!-- ESTADO 1: DISPONIBLE -->
+          <!-- ESTADO 1: DISPONIBLE PARA NUEVA EMERGENCIA -->
           @if (!casoActivo()) {
             
             @if (!modoFormulario()) {
-              <div class="py-6 flex flex-col items-center justify-center space-y-4">
-                <div class="w-20 h-20 rounded-full bg-[#07483b]/10 border-2 border-[#07483b]/30 flex items-center justify-center">
-                  <svg class="w-10 h-10 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="py-8 flex flex-col items-center justify-center space-y-5">
+                <div class="w-24 h-24 rounded-full bg-[#07483b]/10 border-2 border-[#07483b]/30 flex items-center justify-center shadow-inner">
+                  <svg class="w-12 h-12 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                 </div>
 
                 <div class="text-center">
-                  <h3 class="text-base font-bold text-[#0d2822]">Paramédico en Posición</h3>
-                  <p class="text-xs text-[#648279] mt-1 max-w-[240px]">
-                    Sector actual: <strong class="text-[#07483b]">{{ emergency.paramedicoActivo().sectorNombre }}</strong>
+                  <h3 class="text-lg font-black text-[#0d2822]">Listo para Reportar Emergencia</h3>
+                  <p class="text-xs text-[#648279] mt-1">
+                    Zona cubierta: <strong class="text-[#07483b]">{{ emergency.paramedicoActivo().sectorNombre }}</strong>
                   </p>
                 </div>
 
-                <!-- Botón Principal en Verde Bosque -->
+                <!-- Botón Gigante para uso con 1 pulgar en el concierto -->
                 <button 
                   (click)="abrirFormularioNuevo()"
-                  class="w-full py-4 px-6 rounded-2xl bg-[#07483b] hover:bg-[#0b5948] active:scale-95 text-white font-black text-sm tracking-wider uppercase shadow-md flex items-center justify-center gap-3 transition-all cursor-pointer"
+                  class="w-full py-5 px-6 rounded-2xl bg-[#07483b] hover:bg-[#0b5948] active:scale-95 text-white font-black text-base tracking-wider uppercase shadow-lg flex items-center justify-center gap-3 transition-all cursor-pointer"
                 >
-                  <svg class="w-6 h-6 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                  <svg class="w-7 h-7 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                   </svg>
-                  <span>Iniciar Atención</span>
+                  <span>NUEVA ATENCIÓN MÉDICA</span>
                 </button>
               </div>
             } @else {
               
-              <!-- FORMULARIO DE ATENCIÓN DE CAMPO (Fiel a la petición del audio: Cédula, Nombres, Medicamentos) -->
-              <div class="space-y-3.5 animate-fadeIn">
+              <!-- FORMULARIO TÁCTIL DE 1 TOQUE (CERO TECLEO INNECESARIO) -->
+              <div class="space-y-4 animate-fadeIn">
                 <div class="flex items-center justify-between border-b border-[#d2dfd8] pb-2">
-                  <h3 class="text-xs font-bold uppercase tracking-wider text-[#07483b] flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-[#07483b]"></span>
-                    01. Datos de la Incidencia
+                  <h3 class="text-xs font-black uppercase tracking-wider text-[#07483b]">
+                    Paso 1: ¿Qué le ocurre al paciente?
                   </h3>
-                  <button (click)="modoFormulario.set(false)" class="text-xs text-[#648279] font-semibold">✕ Cancelar</button>
+                  <button (click)="modoFormulario.set(false)" class="px-2.5 py-1 rounded bg-slate-200 text-xs text-[#0d2822] font-bold cursor-pointer">
+                    ✕ Cancelar
+                  </button>
                 </div>
 
-                <!-- Motivos Rápidos -->
-                <div>
-                  <label class="block text-[10px] uppercase font-bold text-[#405c54] mb-1">Motivo Principal:</label>
-                  <div class="grid grid-cols-2 gap-1.5">
-                    @for (m of motivosDisponibles; track m) {
+                <!-- Botones Grandes de Motivo Clínico -->
+                <div class="grid grid-cols-2 gap-2">
+                  @for (m of motivosDisponibles; track m) {
+                    <button 
+                      type="button"
+                      (click)="motivoSeleccionado = m"
+                      [class.border-[#07483b]]="motivoSeleccionado === m"
+                      [class.bg-[#07483b]]="motivoSeleccionado === m"
+                      [class.text-white]="motivoSeleccionado === m"
+                      [class.border-[#d2dfd8]]="motivoSeleccionado !== m"
+                      [class.bg-white]="motivoSeleccionado !== m"
+                      class="p-3 rounded-xl border-2 text-left text-xs font-black cursor-pointer transition-all shadow-xs"
+                    >
+                      {{ m }}
+                    </button>
+                  }
+                </div>
+
+                <!-- Píldoras Rápidas de Ubicación en el Sector (1 Clic) -->
+                <div class="bg-white p-3 rounded-xl border border-[#d2dfd8] space-y-2">
+                  <label class="block text-[10px] uppercase font-black text-[#07483b]">
+                    Paso 2: Punto exacto (Toca una referencia o escribe):
+                  </label>
+                  <div class="flex flex-wrap gap-1.5">
+                    @for (ref of referenciasRapidas; track ref) {
                       <button 
-                        (click)="motivoSeleccionado = m"
-                        [class.border-[#07483b]]="motivoSeleccionado === m"
-                        [class.bg-[#edf5f2]]="motivoSeleccionado === m"
-                        [class.text-[#07483b]]="motivoSeleccionado === m"
-                        [class.border-[#d2dfd8]]="motivoSeleccionado !== m"
-                        [class.bg-white]="motivoSeleccionado !== m"
-                        class="p-2 rounded-lg border text-left text-[11px] font-bold cursor-pointer transition-all shadow-xs"
+                        type="button"
+                        (click)="ubicacionEspecifica = ref"
+                        [class.bg-amber-400]="ubicacionEspecifica === ref"
+                        [class.bg-[#edece4]]="ubicacionEspecifica !== ref"
+                        class="px-2.5 py-1 rounded-lg text-[11px] font-bold text-[#0d2822] cursor-pointer transition-all"
                       >
-                        {{ m }}
+                        {{ ref }}
                       </button>
                     }
                   </div>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="ubicacionEspecifica" 
+                    placeholder="Ej. Fila 4, junto a valla derecha" 
+                    class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded-lg p-2.5 text-xs font-bold text-[#0d2822]"
+                  />
                 </div>
 
-                <!-- Ubicación Específica -->
-                <div>
-                  <label class="block text-[10px] uppercase font-bold text-[#405c54] mb-1">Ubicación en el sector:</label>
-                  <input type="text" [(ngModel)]="ubicacionEspecifica" placeholder="Ej. Grada 14, junto a salida 2" class="w-full bg-white border border-[#d2dfd8] rounded-lg p-2 text-xs text-[#0d2822]"/>
-                </div>
-
-                <!-- DATOS DEL PACIENTE (Cédula de Ecuador solicitada en audio) -->
-                <div class="bg-white p-3 rounded-xl border border-[#d2dfd8] space-y-2">
-                  <span class="text-[10px] font-bold text-[#07483b] uppercase block">Ficha Rápida del Paciente (Opcional en Campo):</span>
+                <!-- DATOS DEL PACIENTE CON VALIDADOR DE CÉDULA ECUATORIANA -->
+                <div class="bg-white p-3.5 rounded-xl border border-[#d2dfd8] space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-black text-[#07483b] uppercase">
+                      Paso 3: Datos del Paciente (Opcional si es urgente):
+                    </span>
+                    @if (cedulaPaciente().length === 10) {
+                      <span 
+                        class="text-[10px] font-mono px-2 py-0.5 rounded font-bold"
+                        [ngClass]="cedulaValida() ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'"
+                      >
+                        {{ cedulaValida() ? '✓ Cédula Ecuador Válida' : '⚠ Verificar dígitos' }}
+                      </span>
+                    }
+                  </div>
                   
-                  <div class="grid grid-cols-2 gap-2">
-                    <div>
-                      <label class="block text-[9px] text-[#648279] uppercase font-bold">Cédula (10 dígitos):</label>
-                      <input type="text" [(ngModel)]="cedulaPaciente" maxlength="10" placeholder="1712345678" class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded p-1.5 text-xs font-mono font-bold"/>
+                  <div class="grid grid-cols-3 gap-2">
+                    <div class="col-span-2">
+                      <label class="block text-[10px] text-[#648279] uppercase font-bold mb-0.5">Cédula (10 dígitos):</label>
+                      <input 
+                        type="tel" 
+                        [ngModel]="cedulaPaciente()" 
+                        (ngModelChange)="cedulaPaciente.set($event)"
+                        maxlength="10" 
+                        placeholder="1712345678" 
+                        class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded-lg p-2 text-xs font-mono font-bold"
+                      />
                     </div>
                     <div>
-                      <label class="block text-[9px] text-[#648279] uppercase font-bold">Edad:</label>
-                      <input type="number" [(ngModel)]="edadPaciente" placeholder="Años" class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded p-1.5 text-xs"/>
+                      <label class="block text-[10px] text-[#648279] uppercase font-bold mb-0.5">Edad aprox.:</label>
+                      <input 
+                        type="number" 
+                        [(ngModel)]="edadPaciente" 
+                        placeholder="Años" 
+                        class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded-lg p-2 text-xs font-bold"
+                      />
                     </div>
                   </div>
 
                   <div class="grid grid-cols-2 gap-2">
                     <div>
-                      <label class="block text-[9px] text-[#648279] uppercase font-bold">Nombres:</label>
-                      <input type="text" [(ngModel)]="nombresPaciente" placeholder="Ej. Juan Carlos" class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded p-1.5 text-xs"/>
+                      <label class="block text-[10px] text-[#648279] uppercase font-bold mb-0.5">Nombres:</label>
+                      <input type="text" [(ngModel)]="nombresPaciente" placeholder="Nombre" class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded-lg p-2 text-xs font-bold"/>
                     </div>
                     <div>
-                      <label class="block text-[9px] text-[#648279] uppercase font-bold">Apellidos:</label>
-                      <input type="text" [(ngModel)]="apellidosPaciente" placeholder="Ej. Pérez Gómez" class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded p-1.5 text-xs"/>
+                      <label class="block text-[10px] text-[#648279] uppercase font-bold mb-0.5">Apellidos:</label>
+                      <input type="text" [(ngModel)]="apellidosPaciente" placeholder="Apellido" class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded-lg p-2 text-xs font-bold"/>
                     </div>
                   </div>
 
+                  <!-- PÍLDORAS DE MEDICACIÓN E INSUMOS DE 1 TOQUE (CERO TECLEO) -->
                   <div>
-                    <label class="block text-[9px] text-[#648279] uppercase font-bold">Medicamentos Administrados In Situ:</label>
-                    <input type="text" [(ngModel)]="medicamentosPaciente" placeholder="Ej. Paracetamol 1g, Crioterapia, Suero Oral..." class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded p-1.5 text-xs"/>
+                    <label class="block text-[10px] text-[#07483b] uppercase font-black mb-1">
+                      Primeros Auxilios / Medicación Aplicada (Toca para añadir):
+                    </label>
+                    <div class="flex flex-wrap gap-1.5 mb-2">
+                      @for (med of botiquinRapido; track med) {
+                        <button 
+                          type="button"
+                          (click)="agregarInsumoRapido(med)"
+                          class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-950 text-[11px] font-bold cursor-pointer active:scale-95 transition-all"
+                        >
+                          + {{ med }}
+                        </button>
+                      }
+                    </div>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="medicamentosPaciente" 
+                      placeholder="Selecciona arriba o escribe el tratamiento..." 
+                      class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded-lg p-2 text-xs font-semibold"
+                    />
                   </div>
                 </div>
 
                 <button 
                   (click)="mostrarModalConfirmacion = true"
-                  class="w-full py-3.5 rounded-xl bg-[#07483b] hover:bg-[#0b5948] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                  class="w-full py-4 rounded-xl bg-[#07483b] hover:bg-[#0b5948] text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-lg"
                 >
-                  <span>Confirmar e Iniciar</span>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-                  </svg>
+                  <span>REGISTRAR Y NOTIFICAR AL MANDO</span>
                 </button>
               </div>
 
@@ -189,95 +266,79 @@ import {
 
           } @else {
             
-            <!-- ESTADO 2: CASO ACTIVO EN ATENCIÓN -->
+            <!-- ESTADO 2: PACIENTE ACTIVO EN MANOS DEL BRIGADISTA -->
             <div class="space-y-4 animate-fadeIn">
               
-              <div class="bg-amber-50 border border-amber-300 rounded-xl p-3.5 shadow-sm">
+              <div class="bg-amber-50 border-2 border-amber-400 rounded-xl p-4 shadow-sm">
                 <div class="flex items-center justify-between text-xs">
-                  <span class="font-mono font-bold text-amber-800">{{ casoActivo()!.codigo }}</span>
-                  <span class="bg-amber-200 text-amber-900 px-2 py-0.5 rounded text-[10px] font-bold">
+                  <span class="font-mono font-black text-sm text-amber-900">FICHA {{ casoActivo()!.codigo }}</span>
+                  <span class="bg-amber-300 text-slate-950 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase">
                     {{ casoActivo()!.estado }}
                   </span>
                 </div>
-                <h4 class="text-sm font-extrabold text-[#0d2822] mt-1">{{ casoActivo()!.motivo }}</h4>
-                <p class="text-xs text-[#405c54]">Paciente: {{ casoActivo()!.nombresPaciente || 'No especificado' }} {{ casoActivo()!.apellidosPaciente || '' }}</p>
-                <p class="text-[11px] text-[#648279]">C.I.: {{ casoActivo()!.cedula || 'Pendiente' }}</p>
+                <h4 class="text-base font-black text-[#0d2822] mt-1">{{ casoActivo()!.motivo }}</h4>
+                <p class="text-xs font-bold text-[#405c54]">
+                  Paciente: {{ casoActivo()!.nombresPaciente || 'Sin nombre' }} {{ casoActivo()!.apellidosPaciente || '' }}
+                </p>
+                <p class="text-xs text-[#648279] font-mono mt-0.5">
+                  C.I.: {{ casoActivo()!.cedula || 'No registrada' }} • Ubicación: {{ casoActivo()!.ubicacionEspecifica }}
+                </p>
               </div>
 
-              <!-- 3 OPCIONES OPERATIVAS SEGÚN EL AUDIO DEL CLIENTE:
-                   1) ALTA IN SITU (se atendió ahí mismo)
-                   2) TRASLADO A ACV (ACV 1 o ACV 2)
-                   3) TRASLADO DIRECTO A AMBULANCIA -->
               @if (casoActivo()!.estado === 'EN_ATENCION') {
                 <div class="bg-white border border-[#d2dfd8] rounded-xl p-4 space-y-3 shadow-sm">
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-[#0d2822]">
-                    Decisión Operativa del Paramédico:
+                  <h4 class="text-xs font-black uppercase tracking-wider text-[#0d2822]">
+                    ¿Cuál es la resolución con este paciente?
                   </h4>
 
-                  <div class="space-y-2">
-                    <!-- Opción 1: Alta In Situ -->
+                  <div class="space-y-2.5">
                     <button 
                       (click)="darAltaInSitu()"
-                      class="w-full py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold flex items-center justify-between cursor-pointer transition-all"
+                      class="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center justify-between cursor-pointer transition-all shadow-sm"
                     >
-                      <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                        <span>1) Alta In Situ (Resuelto en el lugar)</span>
-                      </div>
-                      <span class="text-[10px] text-emerald-700 font-semibold">Con medicación</span>
+                      <span>1) ALTA EN EL LUGAR (Ya se estabilizó)</span>
+                      <span class="text-[10px] bg-black/20 px-2 py-0.5 rounded">Cerrar Ficha</span>
                     </button>
 
-                    <!-- Opción 2: Traslado a ACV 1 o ACV 2 -->
                     <button 
                       (click)="mostrarFormularioTrasladoACV = true; mostrarFormularioAmbulancia = false"
-                      class="w-full py-2.5 px-3 rounded-xl bg-[#07483b] hover:bg-[#0b5948] text-white text-xs font-bold flex items-center justify-between cursor-pointer transition-all shadow-xs"
+                      class="w-full py-3.5 px-4 rounded-xl bg-[#07483b] hover:bg-[#0b5948] text-white text-xs font-black flex items-center justify-between cursor-pointer transition-all shadow-sm"
                     >
-                      <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                        <span>2) Trasladar a Puesto Médico (ACV 1 / 2)</span>
-                      </div>
-                      <span class="text-[10px] text-emerald-200">Triage</span>
+                      <span>2) LLEVAR A PUESTO MÉDICO (ACV 1 o 2)</span>
+                      <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded">Para Triage</span>
                     </button>
 
-                    <!-- Opción 3: Traslado directo a Ambulancia -->
                     <button 
                       (click)="mostrarFormularioAmbulancia = true; mostrarFormularioTrasladoACV = false"
-                      class="w-full py-2.5 px-3 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white text-xs font-bold flex items-center justify-between cursor-pointer transition-all shadow-xs"
+                      class="w-full py-3.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black flex items-center justify-between cursor-pointer transition-all shadow-sm"
                     >
-                      <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l2 4v6a1 1 0 01-1 1h-1a2 2 0 11-4 0H8a2 2 0 11-4 0H3a1 1 0 01-1-1v-6l2-4h4m12 0l-2-4H6L4 7m4 0v4m0 0h4m-4 0H4"/></svg>
-                        <span>3) Trasladar directo a Ambulancia</span>
-                      </div>
-                      <span class="text-[10px] text-cyan-200">Urgente</span>
+                      <span>3) PEDIR AMBULANCIA URGENTE</span>
+                      <span class="text-[10px] bg-black/25 px-2 py-0.5 rounded">Evacuación</span>
                     </button>
                   </div>
                 </div>
               }
 
-              <!-- SUBFORMULARIO TRASLADO A ACV 1 O ACV 2 -->
               @if (mostrarFormularioTrasladoACV && casoActivo()!.estado === 'EN_ATENCION') {
-                <div class="bg-white border-2 border-emerald-600 rounded-xl p-4 space-y-3 shadow-md animate-fadeIn">
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-[#07483b]">
-                    Seleccionar Destino ACV (1 o 2):
+                <div class="bg-white border-2 border-[#07483b] rounded-xl p-4 space-y-3 shadow-md animate-fadeIn">
+                  <h4 class="text-xs font-black uppercase text-[#07483b]">
+                    Elige a qué Puesto Médico (ACV) lo llevas:
                   </h4>
 
-                  <div>
-                    <label class="block text-[10px] font-bold text-[#405c54] mb-1">Puesto de Víctimas de Destino:</label>
-                    <select [(ngModel)]="acvSeleccionadoId" class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded-lg p-2 text-xs font-bold text-[#07483b]">
-                      @for (acv of emergency.acvs(); track acv.id) {
-                        <option [value]="acv.id">{{ acv.codigo }} - {{ acv.nombre }} ({{ acv.encargado }})</option>
-                      }
-                    </select>
-                  </div>
+                  <select [(ngModel)]="acvSeleccionadoId" class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded-lg p-2.5 text-xs font-bold text-[#07483b]">
+                    @for (acv of emergency.acvs(); track acv.id) {
+                      <option [value]="acv.id">{{ acv.codigo }} - {{ acv.nombre }}</option>
+                    }
+                  </select>
 
                   <div class="grid grid-cols-2 gap-2">
                     @for (medio of mediosTraslado; track medio) {
                       <button 
                         (click)="medioSeleccionado = medio"
-                        [class.border-[#07483b]]="medioSeleccionado === medio"
-                        [class.bg-[#edf5f2]]="medioSeleccionado === medio"
-                        [class.border-[#d2dfd8]]="medioSeleccionado !== medio"
-                        class="p-2 rounded-lg border text-xs font-bold"
+                        [class.bg-[#07483b]]="medioSeleccionado === medio"
+                        [class.text-white]="medioSeleccionado === medio"
+                        [class.bg-[#f5f4ed]]="medioSeleccionado !== medio"
+                        class="p-2.5 rounded-lg border border-[#d2dfd8] text-xs font-bold cursor-pointer"
                       >
                         {{ medio }}
                       </button>
@@ -286,44 +347,39 @@ import {
 
                   <button 
                     (click)="confirmarTrasladoACV()"
-                    class="w-full py-3 rounded-xl bg-[#07483b] text-white font-black text-xs uppercase"
+                    class="w-full py-3.5 rounded-xl bg-[#07483b] text-white font-black text-xs uppercase cursor-pointer shadow-md"
                   >
-                    Confirmar Traslado a ACV
+                    Confirmar Salida hacia ACV
                   </button>
                 </div>
               }
 
-              <!-- SUBFORMULARIO TRASLADO DIRECTO A AMBULANCIA -->
               @if (mostrarFormularioAmbulancia && casoActivo()!.estado === 'EN_ATENCION') {
-                <div class="bg-white border-2 border-cyan-600 rounded-xl p-4 space-y-3 shadow-md animate-fadeIn">
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-cyan-900">
-                    Derivación Directa a Ambulancia:
+                <div class="bg-white border-2 border-red-600 rounded-xl p-4 space-y-3 shadow-md animate-fadeIn">
+                  <h4 class="text-xs font-black uppercase text-red-900">
+                    Seleccionar Ambulancia de Evacuación:
                   </h4>
 
-                  <div>
-                    <label class="block text-[10px] font-bold text-[#405c54] mb-1">Seleccionar Unidad Móvil:</label>
-                    <select [(ngModel)]="ambulanciaSeleccionadaId" class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded-lg p-2 text-xs font-bold text-cyan-950">
-                      @for (amb of emergency.ambulancias(); track amb.id) {
-                        <option [value]="amb.id">{{ amb.codigo }} ({{ amb.placa }}) - {{ amb.paramedicoResponsable }}</option>
-                      }
-                    </select>
-                  </div>
+                  <select [(ngModel)]="ambulanciaSeleccionadaId" class="w-full bg-[#f5f4ed] border border-[#d2dfd8] rounded-lg p-2.5 text-xs font-bold text-red-950">
+                    @for (amb of emergency.ambulancias(); track amb.id) {
+                      <option [value]="amb.id">{{ amb.codigo }} ({{ amb.placa }}) - {{ amb.tipo }}</option>
+                    }
+                  </select>
 
                   <button 
                     (click)="confirmarTrasladoAmbulanciaDirecto()"
-                    class="w-full py-3 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white font-black text-xs uppercase"
+                    class="w-full py-3.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase cursor-pointer shadow-md"
                   >
-                    Despachar hacia Ambulancia
+                    Enviar Paciente a Ambulancia
                   </button>
                 </div>
               }
 
-              <!-- BOTÓN VOLVER AL PERFIL -->
               <button 
                 (click)="casoActivo.set(null); modoFormulario.set(false)"
-                class="w-full py-2.5 rounded-lg bg-white border border-[#d2dfd8] hover:bg-[#edece4] text-xs text-[#405c54] font-semibold cursor-pointer"
+                class="w-full py-3 rounded-xl bg-white border border-[#d2dfd8] hover:bg-[#edece4] text-xs text-[#0d2822] font-bold cursor-pointer"
               >
-                ← Volver al estado disponible
+                ← Volver y Quedar Disponible
               </button>
 
             </div>
@@ -332,36 +388,28 @@ import {
 
         </div>
 
-        <!-- PIE DE PÁGINA DEL CELULAR -->
-        <div class="p-3 bg-[#edece4] border-t border-[#d2dfd8] flex justify-center">
-          <div class="w-28 h-1 bg-[#405c54] rounded-full"></div>
-        </div>
-
-        <!-- MODAL DE DOBLE CONFIRMACIÓN OPERATIVA -->
+        <!-- MODAL DE CONFIRMACIÓN RÁPIDA -->
         @if (mostrarModalConfirmacion) {
-          <div class="absolute inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div class="absolute inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fadeIn">
             <div class="bg-white border-2 border-[#07483b] rounded-2xl p-5 w-full max-w-xs space-y-4 shadow-2xl">
               <div class="text-center">
-                <span class="text-[10px] font-mono uppercase tracking-widest text-[#d97706] block font-bold">
-                  Confirmación Operativa
+                <span class="text-[10px] font-mono uppercase tracking-widest text-amber-700 block font-black">
+                  Aviso al Puesto de Mando
                 </span>
-                <h3 class="text-sm font-black text-[#0d2822] mt-1">
-                  ¿Iniciar la atención ahora?
+                <h3 class="text-base font-black text-[#0d2822] mt-1">
+                  ¿Enviar reporte ahora?
                 </h3>
-                <p class="text-[11px] text-[#648279] mt-1">
-                  Se transmitirá al Centro de Mando y al ACV.
-                </p>
               </div>
 
-              <div class="bg-[#f5f4ed] p-3 rounded-lg border border-[#d2dfd8] text-[11px] space-y-1 font-mono">
-                <div>Motivo: <strong class="text-[#0d2822]">{{ motivoSeleccionado }}</strong></div>
-                <div>Sector: <strong class="text-[#07483b]">{{ emergency.paramedicoActivo().sectorNombre }}</strong></div>
-                <div>Paramédico: <strong>{{ emergency.paramedicoActivo().nombre }}</strong></div>
+              <div class="bg-[#f5f4ed] p-3 rounded-xl border border-[#d2dfd8] text-xs space-y-1">
+                <div>Causa: <strong class="text-[#0d2822]">{{ motivoSeleccionado }}</strong></div>
+                <div>Zona: <strong class="text-[#07483b]">{{ emergency.paramedicoActivo().sectorNombre }}</strong></div>
+                <div>Lugar: <strong>{{ ubicacionEspecifica }}</strong></div>
               </div>
 
-              <div class="grid grid-cols-2 gap-2 pt-2">
-                <button (click)="mostrarModalConfirmacion = false" class="py-2 rounded-lg bg-[#edece4] text-xs font-bold text-[#405c54]">Cancelar</button>
-                <button (click)="confirmarAtencion()" class="py-2 rounded-lg bg-[#07483b] text-white font-bold text-xs uppercase">✓ Sí, Iniciar</button>
+              <div class="grid grid-cols-2 gap-2">
+                <button (click)="mostrarModalConfirmacion = false" class="py-2.5 rounded-xl bg-[#edece4] text-xs font-bold text-[#405c54] cursor-pointer">Volver</button>
+                <button (click)="confirmarAtencion()" class="py-2.5 rounded-xl bg-[#07483b] text-white font-black text-xs uppercase cursor-pointer">✓ Enviar</button>
               </div>
             </div>
           </div>
@@ -394,11 +442,29 @@ export class ParamedicMobileComponent {
     'Otro motivo'
   ];
 
+  referenciasRapidas: string[] = [
+    'Frente a Tarima / Valla',
+    'Grada Central',
+    'Puerta de Ingreso',
+    'Zona Baños / Hidratación',
+    'Cancha General'
+  ];
+
+  botiquinRapido: string[] = [
+    'Suero Oral',
+    'Paracetamol 1g',
+    'Hielo / Crioterapia',
+    'Vendaje / Curación',
+    'Oxígeno 3L',
+    'Control de Presión',
+    'Reposo Vocal/Físico'
+  ];
+
   mediosTraslado: MedioTraslado[] = ['Marcha asistida', 'Silla de ruedas', 'Camilla', 'Ambulancia'];
 
   motivoSeleccionado: MotivoAtencion = 'Trauma o caída';
-  ubicacionEspecifica = 'Frente a vallas, sector derecho';
-  cedulaPaciente = '17';
+  ubicacionEspecifica = 'Frente a Tarima / Valla';
+  cedulaPaciente = signal('');
   nombresPaciente = '';
   apellidosPaciente = '';
   edadPaciente?: number;
@@ -408,12 +474,46 @@ export class ParamedicMobileComponent {
   medioSeleccionado: MedioTraslado = 'Camilla';
   ambulanciaSeleccionadaId = 'amb-1';
 
+  // Algoritmo Oficial Módulo 10 del Registro Civil del Ecuador
+  cedulaValida = computed(() => {
+    const ced = this.cedulaPaciente().trim();
+    if (!/^\d{10}$/.test(ced)) return false;
+    const prov = parseInt(ced.substring(0, 2), 10);
+    if ((prov < 1 || prov > 24) && prov !== 30) return false;
+    const coef = [2, 1, 2, 1, 2, 1, 2, 1, 2];
+    let suma = 0;
+    for (let i = 0; i < 9; i++) {
+      let val = parseInt(ced.charAt(i), 10) * coef[i];
+      if (val >= 10) val -= 9;
+      suma += val;
+    }
+    const digitoVerificador = (10 - (suma % 10)) % 10;
+    return digitoVerificador === parseInt(ced.charAt(9), 10);
+  });
+
   seleccionarParamedico(id: string) {
     const p = this.emergency.personal().find(item => item.id === id);
     if (p) this.emergency.setParamedicoActivo(p);
   }
 
+  cambiarMiZona(sectorId: string) {
+    this.emergency.cambiarSectorParamedico(this.emergency.paramedicoActivo().id, sectorId);
+  }
+
+  agregarInsumoRapido(insumo: string) {
+    if (!this.medicamentosPaciente) {
+      this.medicamentosPaciente = insumo;
+    } else if (!this.medicamentosPaciente.includes(insumo)) {
+      this.medicamentosPaciente = `${this.medicamentosPaciente} + ${insumo}`;
+    }
+  }
+
   abrirFormularioNuevo() {
+    this.cedulaPaciente.set('');
+    this.nombresPaciente = '';
+    this.apellidosPaciente = '';
+    this.edadPaciente = undefined;
+    this.medicamentosPaciente = '';
     this.modoFormulario.set(true);
   }
 
@@ -423,11 +523,11 @@ export class ParamedicMobileComponent {
       this.motivoSeleccionado, 
       this.ubicacionEspecifica,
       {
-        cedula: this.cedulaPaciente,
-        nombres: this.nombresPaciente,
-        apellidos: this.apellidosPaciente,
+        cedula: this.cedulaPaciente() || undefined,
+        nombres: this.nombresPaciente || undefined,
+        apellidos: this.apellidosPaciente || undefined,
         edad: this.edadPaciente,
-        medicamentos: this.medicamentosPaciente
+        medicamentos: this.medicamentosPaciente || undefined
       }
     );
     this.casoActivo.set(nueva);
@@ -450,11 +550,13 @@ export class ParamedicMobileComponent {
       'Traslado al puesto médico'
     );
     this.mostrarFormularioTrasladoACV = false;
+    this.casoActivo.set(null);
   }
 
   confirmarTrasladoAmbulanciaDirecto() {
     if (!this.casoActivo()) return;
     this.emergency.derivarDirectoAmbulancia(this.casoActivo()!.id, this.ambulanciaSeleccionadaId);
     this.mostrarFormularioAmbulancia = false;
+    this.casoActivo.set(null);
   }
 }

@@ -1,59 +1,58 @@
 @echo off
-title SEPAM - Sistema de Mando y Operacion Prehospitalaria
+title SEPAM - Puesto de Mando Unificado (Hotspot LAN + Servidor)
 color 0A
 cls
 
 echo ==============================================================================
 echo        SEPAM ECUADOR - SISTEMA DE MANDO Y OPERACION PREHOSPITALARIA
-echo                  CONTROL OPERATIVO PARA EVENTOS MASIVOS
+echo             RED MADRE HOTSPOT MOVIL + SERVIDOR EN TIEMPO REAL
 echo ==============================================================================
 echo.
-echo [1/3] Verificando entorno de ejecucion...
+
+echo [1/4] Habilitando paso de mensajes en Firewall para celulares del Hotspot...
+netsh advfirewall firewall show rule name="SEPAM_HOTSPOT_8000" >nul 2>&1
+if %errorlevel% neq 0 (
+    netsh advfirewall firewall add rule name="SEPAM_HOTSPOT_8000" dir=in action=allow protocol=TCP localport=8000 >nul 2>&1
+    netsh advfirewall firewall add rule name="SEPAM_HOTSPOT_4200" dir=in action=allow protocol=TCP localport=4200 >nul 2>&1
+    echo   -> Reglas de red local para celulares (Puertos 8000 y 4200) listas.
+) else (
+    echo   -> Permisos de red Hotspot verificados: OK.
+)
+
+echo.
+echo [2/4] Verificando entorno Python...
 where python >nul 2>&1
 if %errorlevel% neq 0 (
     echo [ERROR] Python no esta instalado o no esta en el PATH.
-    echo Por favor instala Python 3.10 o superior.
     pause
     exit /b
 )
 
 echo.
-echo [2/3] Iniciando Servidor de Base de Datos y Analitica (DuckDB + SQLite WAL)...
+echo [3/4] Iniciando Servidor Central SEPAM (0.0.0.0:8000)...
 cd /d "%~dp0backend"
-start "SEPAM Backend (DuckDB + SQLite WAL + Red)" cmd /k "python main.py"
+start "SEPAM Backend (Hotspot LAN + SQLite WAL + DuckDB)" cmd /k "python main.py"
 
 timeout /t 2 >nul
 
 echo.
-echo [3/3] Verificando servidor web...
+echo [4/4] Iniciando Consola Web del Puesto de Mando...
 where npm >nul 2>&1
 if %errorlevel% equ 0 (
-    echo   -> Node.js detectado. Iniciando servidor Angular en 0.0.0.0...
     cd /d "%~dp0"
-    start "SEPAM Frontend (Red Local 0.0.0.0)" cmd /k "npm start -- --host 0.0.0.0 --port 4200"
+    start "SEPAM Frontend (Abierto a Red Hotspot 0.0.0.0)" cmd /k "npm start -- --host 0.0.0.0 --port 4200"
     set DESTINO_URL=http://localhost:4200
 ) else (
-    echo   -> Modo Ligero Autónomo (Servido directamente por Python en puerto 8000).
     set DESTINO_URL=http://localhost:8000/sepam/
 )
 
 echo.
 echo ==============================================================================
-echo                       SISTEMA INICIADO EXITOSAMENTE
+echo             SISTEMA ACTIVO Y LISTO PARA CONECTAR CELULARES
 echo ==============================================================================
-echo.
-echo   * Consola de Mando Central (Esta Laptop):
-echo     -> %DESTINO_URL%
-echo.
-echo   * Paramedicos y Celulares (Conectados al Wi-Fi o Hotspot):
-echo     -> NO REQUIEREN ESCRIBIR IP: Pulsa el boton "🛰️ Red & QR" en la web
-echo        y muestra el codigo QR para que apunten con su camara.
-echo.
-echo   * Base de Datos DuckDB + SQLite WAL:
-echo     -> http://localhost:8000/api/estado
-echo.
-echo ==============================================================================
-echo   Para cerrar el sistema por completo, cierra las ventanas de comando.
+echo   1. Enciende la "Zona con cobertura movil" (Hotspot) en Windows 11.
+echo   2. Conecta los celulares al Wi-Fi que emite esta laptop.
+echo   3. En la pantalla que se abrira, toca "Conectar Celulares (QR)".
 echo ==============================================================================
 echo.
 

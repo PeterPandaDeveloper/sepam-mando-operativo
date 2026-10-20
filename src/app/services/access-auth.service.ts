@@ -32,9 +32,22 @@ export class AccessAuthService implements OnDestroy {
   // Soporta Web, LAN y futura APK (apuntando al servidor central si corre en móvil empaquetado)
   private get baseUrl(): string {
     if (typeof window !== 'undefined') {
-      if (window.location.protocol === 'capacitor:' || window.location.protocol === 'file:') {
-        return 'https://sepam-mando-operativo.vercel.app';
+      const params = new URLSearchParams(window.location.search);
+      const serverParam = params.get('server');
+      if (serverParam) {
+        localStorage.setItem('sepam_server_host', serverParam.trim());
+        return serverParam.trim();
       }
+
+      const savedHost = localStorage.getItem('sepam_server_host');
+      if (savedHost) {
+        return savedHost;
+      }
+
+      if (window.location.protocol === 'capacitor:' || window.location.protocol === 'file:') {
+        return 'http://192.168.137.1:8000';
+      }
+
       if (window.location.port === '4200') {
         return `http://${window.location.hostname}:8000`;
       }

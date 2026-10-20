@@ -28,8 +28,26 @@ export class EmergencyService implements OnDestroy {
   private syncEnProgreso = false;
 
   private get baseUrl(): string {
-    if (typeof window !== 'undefined' && window.location.port === '4200') {
-      return `http://${window.location.hostname}:8000`;
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const serverParam = params.get('server');
+      if (serverParam) {
+        localStorage.setItem('sepam_server_host', serverParam.trim());
+        return serverParam.trim();
+      }
+
+      const savedHost = localStorage.getItem('sepam_server_host');
+      if (savedHost) {
+        return savedHost;
+      }
+
+      if (window.location.protocol === 'capacitor:' || window.location.protocol === 'file:') {
+        return 'http://192.168.137.1:8000';
+      }
+
+      if (window.location.port === '4200') {
+        return `http://${window.location.hostname}:8000`;
+      }
     }
     return '';
   }
@@ -392,6 +410,7 @@ export class EmergencyService implements OnDestroy {
   ]);
 
   notificacionActiva = signal<{ mensaje: string; tipo: 'info' | 'alerta' | 'exito' } | null>(null);
+  pendientesOffline = signal<number>(0);
 
   // Computados
   personalOperativoTotal = computed(() => this.personal().filter(p => p.activo).length);
@@ -438,6 +457,17 @@ export class EmergencyService implements OnDestroy {
   });
 
   constructor(private supabase: SupabaseService) {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('sepam_offline_queue') || '[]';
+        this.pendientesOffline.set(JSON.parse(raw).length);
+      } catch {}
+
+      window.addEventListener('online', () => {
+        this.sincronizarColaOffline();
+        this.cargarAtencionesDesdeBackend();
+      });
+    }
     this.iniciarSincronizacionBackend();
   }
 
@@ -575,9 +605,51 @@ export class EmergencyService implements OnDestroy {
   guardarAtencionEnBackend(atencion: Atencion) {
     const payload = this.mapearAtencionABackend(atencion);
     this.http.post(`${this.baseUrl}/api/atenciones`, payload).subscribe({
-      next: () => {},
-      error: (err) => console.warn('Aviso: Atencion guardada en memoria local (servidor desconectado)', err)
+      next: () => {
+        this.sincronizarColaOffline();
+      },
+      error: () => {
+        this.encolarAtencionOffline(payload);
+      }
     });
+  }
+
+  private encolarAtencionOffline(payload: any) {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = localStorage.getItem('sepam_offline_queue') || '[]';
+      const cola: any[] = JSON.parse(raw);
+      const idx = cola.findIndex(item => item.id === payload.id);
+      if (idx >= 0) {
+        cola[idx] = payload;
+      } else {
+        cola.push(payload);
+      }
+      localStorage.setItem('sepam_offline_queue', JSON.stringify(cola));
+      this.pendientesOffline.set(cola.length);
+    } catch {}
+  }
+
+  sincronizarColaOffline() {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = localStorage.getItem('sepam_offline_queue');
+      if (!raw) return;
+      const cola: any[] = JSON.parse(raw);
+      if (cola.length === 0) {
+        this.pendientesOffline.set(0);
+        return;
+      }
+      const lote = [...cola];
+      localStorage.removeItem('sepam_offline_queue');
+      this.pendientesOffline.set(0);
+
+      lote.forEach(item => {
+        this.http.post(`${this.baseUrl}/api/atenciones`, item).subscribe({
+          error: () => this.encolarAtencionOffline(item)
+        });
+      });
+    } catch {}
   }
 
   guardarLogEnBackend(log: LogAuditoria) {
@@ -618,6 +690,8 @@ export class EmergencyService implements OnDestroy {
   cargarAtencionesDesdeBackend() {
     if (this.syncEnProgreso) return;
     this.syncEnProgreso = true;
+    this.sincronizarColaOffline();
+
     this.http.get<any[]>(`${this.baseUrl}/api/atenciones`).subscribe({
       next: (rows) => {
         this.syncEnProgreso = false;
@@ -625,10 +699,9 @@ export class EmergencyService implements OnDestroy {
           const atencionesRemotas = rows.map(r => this.mapearBackendAAtencion(r));
           this.atenciones.update(locales => {
             const mapLocales = new Map(locales.map(a => [a.id, a]));
+            // Sobrescribir siempre con la versión más reciente del servidor (Triage, ACV, Ambulancia)
             atencionesRemotas.forEach(rem => {
-              if (!mapLocales.has(rem.id)) {
-                mapLocales.set(rem.id, rem);
-              }
+              mapLocales.set(rem.id, rem);
             });
             return Array.from(mapLocales.values());
           });

@@ -1,0 +1,19 @@
+{
+  "appId": "com.sepam.mandooperativo",
+  "appName": "SEPAM Brigadistas",
+  "webDir": "dist/sepam-mando-operativo/browser",
+  "bundledWebRuntime": false,
+  "server": {
+    "cleartext": true,
+    "allowNavigation": [
+      "192.168.*",
+      "10.*",
+      "172.*",
+      "150.136.238.32",
+      "*.vercel.app"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
