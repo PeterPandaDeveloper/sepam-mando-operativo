@@ -26,14 +26,35 @@ import {
           </div>
           <div class="flex items-center gap-2">
             @if (emergency.pendientesOffline() > 0) {
-              <span class="text-[10px] bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full font-mono font-bold animate-pulse">
-                {{ emergency.pendientesOffline() }} guardados en móvil (Sincronizando...)
-              </span>
+              <button 
+                type="button"
+                (click)="emergency.sincronizarColaOffline()"
+                class="text-[10px] bg-amber-500 hover:bg-amber-600 text-slate-950 px-2.5 py-1 rounded-full font-mono font-black shadow-xs cursor-pointer transition-all flex items-center gap-1 animate-pulse"
+                title="Toca para enviar reportes al Puesto de Mando ahora"
+              >
+                <svg class="w-3 h-3 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span>{{ emergency.pendientesOffline() }} guardados (Forzar Envío)</span>
+              </button>
             } @else {
               <span class="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full font-mono font-bold">
                 CONECTADO AL PMU
               </span>
             }
+
+            <button 
+              type="button"
+              (click)="abrirConfiguracionIp()"
+              class="p-1 px-2 rounded-lg bg-white/80 hover:bg-white text-[#07483b] border border-[#d2dfd8] text-[10px] font-mono font-bold flex items-center gap-1 cursor-pointer transition-all"
+              title="Configurar IP manual del Hotspot"
+            >
+              <svg class="w-3 h-3 text-[#07483b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <span>IP Hotspot</span>
+            </button>
           </div>
         </div>
 
@@ -415,6 +436,53 @@ import {
           </div>
         }
 
+        <!-- MODAL CONFIGURAR IP HOTSPOT -->
+        @if (mostrarModalIp()) {
+          <div class="absolute inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <div class="bg-white border-2 border-[#07483b] rounded-2xl p-5 w-full max-w-xs space-y-4 shadow-2xl">
+              <div class="text-center">
+                <span class="text-[10px] font-mono uppercase tracking-widest text-[#07483b] block font-black">Configuración de Red</span>
+                <h3 class="text-base font-black text-[#0d2822] mt-1">IP del Hotspot / Servidor</h3>
+                <p class="text-[10px] text-[#405c54] mt-1">Escribe la IP de la laptop que ejecuta el backend SEPAM (ej: http://192.168.137.1:8000)</p>
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-[10px] font-mono font-bold text-[#405c54] uppercase">Dirección del servidor</label>
+                <input
+                  type="url"
+                  [(ngModel)]="ipManualInput"
+                  placeholder="http://192.168.137.1:8000"
+                  class="w-full px-3 py-2.5 rounded-xl border-2 border-[#d2dfd8] focus:border-[#07483b] outline-none text-sm font-mono text-[#0d2822] bg-[#f5f4ed]"
+                />
+                @if (ipGuardadaActual) {
+                  <p class="text-[10px] text-[#07483b] font-mono">
+                    Actual: <strong>{{ ipGuardadaActual }}</strong>
+                  </p>
+                }
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  (click)="mostrarModalIp.set(false)"
+                  class="py-2.5 rounded-xl bg-[#edece4] text-xs font-bold text-[#405c54] cursor-pointer"
+                >Cancelar</button>
+                <button
+                  type="button"
+                  (click)="guardarIpManual()"
+                  class="py-2.5 rounded-xl bg-[#07483b] text-white font-black text-xs uppercase cursor-pointer"
+                >Guardar IP</button>
+              </div>
+
+              <button
+                type="button"
+                (click)="limpiarIpManual()"
+                class="w-full py-2 rounded-xl border border-red-200 text-[10px] text-red-600 font-mono cursor-pointer hover:bg-red-50"
+              >Restablecer al Hotspot por defecto (192.168.137.1)</button>
+            </div>
+          </div>
+        }
+
       </div>
 
     </div>
@@ -428,6 +496,33 @@ export class ParamedicMobileComponent {
   mostrarModalConfirmacion = false;
   mostrarFormularioTrasladoACV = false;
   mostrarFormularioAmbulancia = false;
+
+  // -- Configuración IP Manual --
+  mostrarModalIp = signal(false);
+  ipManualInput = '';
+  ipGuardadaActual = localStorage.getItem('sepam_server_host') ?? '';
+
+  abrirConfiguracionIp() {
+    this.ipGuardadaActual = localStorage.getItem('sepam_server_host') ?? '';
+    this.ipManualInput = this.ipGuardadaActual;
+    this.mostrarModalIp.set(true);
+  }
+
+  guardarIpManual() {
+    const ip = this.ipManualInput.trim();
+    if (ip) {
+      localStorage.setItem('sepam_server_host', ip);
+      this.ipGuardadaActual = ip;
+    }
+    this.mostrarModalIp.set(false);
+  }
+
+  limpiarIpManual() {
+    localStorage.removeItem('sepam_server_host');
+    this.ipGuardadaActual = '';
+    this.ipManualInput = '';
+    this.mostrarModalIp.set(false);
+  }
 
   motivosDisponibles: MotivoAtencion[] = [
     'Trauma o caída',

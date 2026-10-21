@@ -878,7 +878,9 @@ export class EmergencyService implements OnDestroy {
   ): Atencion {
     const param = this.paramedicoActivo();
     const count = this.atenciones().length + 1;
-    const nuevoId = `AT-${count.toString().padStart(3, '0')}`;
+    const sufijoUnico = Date.now().toString().slice(-3);
+    const numParam = param.usuario.replace(/\D/g, '') || '01';
+    const nuevoId = `AT-${count.toString().padStart(2, '0')}-P${numParam}-${sufijoUnico}`;
     const ahora = new Date();
     const horaFormateada = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
