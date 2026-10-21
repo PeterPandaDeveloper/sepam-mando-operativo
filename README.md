@@ -1,194 +1,254 @@
-# 🚑 SEPAM - Sistema de Mando Operativo y Triaje Prehospitalario
+# SEPAM — Sistema de Mando Operativo y Triaje Prehospitalario
 
-Sistema integral de gestión de emergencias médicas, triaje táctico y mando operativo en tiempo real para eventos de concentración masiva (estadios, conciertos, ferias y recintos cerrados/abiertos).
+> Sistema integral de gestion de emergencias medicas, triaje tactico y mando operativo en tiempo real para eventos de concentracion masiva: estadios, conciertos, ferias y recintos cerrados/abiertos.
 
-Diseñado con arquitectura **100% Cloud Server-Side**, alta disponibilidad con **HTTPS constante**, motor analítico de alto rendimiento y acceso instantáneo para brigadistas móviles sin instalación previa.
-
----
-
-## 🌟 Características Principales
-
-- **Triaje Táctico Rápido (Método START):** Registro ágil de pacientes en menos de 15 segundos con clasificación por código de colores (Rojo: Crítico, Amarillo: Urgente, Verde: Leve, Negro: Fallecido).
-- **Tablero de Control de Mando Operativo:** Monitoreo en vivo de pacientes atendidos, altas en puesto médico de avanzada (PMA), derivaciones a carpas y traslados en ambulancia a hospitales de la red pública.
-- **Acceso Móvil Plug & Play vía Código QR:** Los brigadistas en cancha o graderíos escanean el código QR oficial desde su navegador móvil (Chrome, Safari) usando su plan de datos 4G/5G o el Wi-Fi del evento.
-- **Persistencia Políglota Tri-Motor (Gold Standard en Emergencias):**
-  - **SQLite 3 en modo WAL (Write-Ahead Logging):** Motor transaccional (OLTP) de alta concurrencia que registra atenciones en microsegundos sin bloqueos.
-  - **DuckDB 1.5 OLAP Engine:** Motor columnar en memoria para analítica vectorizada instantánea y generación al vuelo de reportes ejecutivos en formato **Excel (`.xlsx`)** y **CSV**.
-  - **Redis 7 NoSQL In-Memory & Pub/Sub:** Sistema de mensajería ultrarrápido (<1ms) para alertas críticas instantáneas (Triage Rojo/Amarillo), alarma acústica y caché de métricas en memoria.
-- **Blindaje y Convivencia en la Nube:** Coexistencia armónica con servidores de juego (Pterodactyl, Wings Daemon y Docker) en la misma instancia de Oracle Cloud sin conflictos de puertos ni colisiones de API.
+**URL de produccion:** [https://sepam-mando-operativo.vercel.app](https://sepam-mando-operativo.vercel.app)
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## Caracteristicas principales
 
-```mermaid
-flowchart TD
-    subgraph Clientes ["📱 Dispositivos de Campo y Mando"]
-        Brigadistas["Brigadistas en Graderío / Cancha\n(Móviles 4G / 5G / Wi-Fi)"]
-        Mando["Mando Central / Puesto de Comando\n(Laptop / Tablet / PC)\n🚨 Alarma Sonora Activa"]
-    end
+- **Triaje Tactico Rapido (Metodo START):** Registro de pacientes en menos de 15 segundos con clasificacion por codigo de colores — Rojo (Critico), Amarillo (Urgente), Verde (Leve), Negro (Fallecido).
+- **Terminal Movil de Brigadista:** App progresiva (PWA / APK) para uso en cancha o graderia sin instalacion. Funciona via QR desde cualquier navegador movil con 4G/5G o Wi-Fi del evento.
+- **Modo Offline-First:** Si el brigadista pierde señal, los reportes se almacenan localmente y se sincronizan automaticamente al recuperar conexion. Boton "Forzar Envio" disponible para sincronizacion manual.
+- **IDs Anti-colision:** Cada atencion genera un codigo unico (`AT-06-P03-847`) que incluye el numero del brigadista y sufijo de timestamp, evitando colisiones cuando varios brigadistas trabajan sin señal simultaneamente.
+- **Dashboard Power BI estilo Mando:** Widgets SVG de dona, barras, tendencia y gauge con cross-filtering. Modo LEGO Builder para Super Usuarios (arrastrar, agregar, quitar widgets).
+- **Persistencia Poliglota Tri-Motor:**
+  - **SQLite 3 + WAL:** Motor OLTP transaccional. Registra atenciones en microsegundos sin bloqueos de escritura.
+  - **DuckDB 1.5:** Motor columnar OLAP en memoria. Genera reportes Excel/CSV con consultas vectorizadas instantaneas.
+  - **Redis 7:** Pub/Sub en memoria (<1ms). Alertas criticas en vivo y cache de metricas entre clientes conectados.
+- **Configuracion IP Hotspot Manual:** Los brigadistas pueden ingresar la IP de la laptop del mando desde la app, sin necesidad de camara/QR.
+- **Validacion Cedula Ecuatoriana:** Modulo 10 en tiempo real en el formulario de atencion.
+- **Semaforos de Signos Vitales:** SpO2 < 92%, FC > 110 lpm o Glasgow < 14 activan alertas rojas pulsantes en la vista ACV.
+- **Formulario MSP 002 Autogenerado:** Folio secuencial `MSP-002-2026-XXXX` para ambulancias con firma y datos legales.
 
-    subgraph Vercel ["⚡ Vercel Cloud (Edge Network)"]
-        Frontend["Frontend Angular 20+ SPA\nHTTPS https://sepam-mando-operativo.vercel.app"]
-        VercelProxy["Vercel Reverse Proxy\nRewrite: /api/* -> /sepam-api/*"]
-    end
+---
 
-    subgraph Oracle ["☁️ Oracle Cloud Infrastructure (150.136.238.32)"]
-        Nginx["Nginx Reverse Proxy (Puerto 80)\nlocation ^~ /sepam-api/"]
-        FastAPI["FastAPI Backend (Puerto 8000)\nSystemd: sepam-api.service"]
-        
-        subgraph Motores ["⚡ Persistencia Políglota Tri-Motor"]
-            SQLite["💾 SQLite 3 (WAL)\nOLTP Inmutable en Disco"]
-            DuckDB["🦆 DuckDB 1.5\nOLAP Analítico & Excel"]
-            Redis["⚡ Redis 7 NoSQL\nPub/Sub & Alert Stream (<1ms)"]
-        end
-        
-        Pterodactyl["Pterodactyl Panel + Wings + Docker\n(Totalmente Aislado e Intacto)"]
-    end
+## Arquitectura
 
-    Brigadistas -->|HTTPS| Frontend
-    Mando -->|HTTPS + Login| Frontend
-    Frontend -->|/api/*| VercelProxy
-    VercelProxy -->|Proxy seguro| Nginx
-    Nginx -->|Aislado a 127.0.0.1:8000| FastAPI
-    FastAPI --> SQLite
-    FastAPI --> DuckDB
-    FastAPI --> Redis
-    Redis -.->|Alertas en Vivo| FastAPI
+```
+Brigadistas (movil 4G/QR)           Mando Central (laptop/tablet)
+        |                                       |
+        v                                       v
++-------------------------------------------------------+
+|            Frontend Angular 17+ (SPA)                 |
+|            Vercel Edge Network — HTTPS                 |
+|   Signals API · Tailwind CSS · Standalone Components   |
++-------------------------------------------------------+
+                        |
+              /api/* proxy (vercel.json)
+                        |
+                        v
++-------------------------------------------------------+
+|            FastAPI Backend (Python 3.12)               |
+|            Laptop del Mando — puerto 8000              |
+|            o servidor Oracle Cloud                     |
++------------------+----------------+-------------------+
+                   |                |
+            SQLite (WAL)     DuckDB (OLAP)    Redis (Pub/Sub)
+            atenciones       analytics        alertas en vivo
+            persistencia     Excel/CSV        cache metricas
 ```
 
----
+### Modo de conexion segun escenario
 
-## 🔐 Credenciales de Acceso
-
-El sistema cuenta con control de acceso basado en roles (RBAC):
-
-| Rol | Usuario | Contraseña | Permisos |
-| :--- | :--- | :--- | :--- |
-| **Super Usuario (Mando Central)** | `pedro.zavala` | `admin1` | Acceso completo: Tablero táctico, métricas en vivo, descarga de reportes Excel, configuración del evento y generación de Códigos QR para el personal. |
-| **Brigadista de Campo** | *(Sin login requerido)* | *(Acceso QR directo)* | Formulario simplificado de ingreso rápido de atenciones y triaje. |
+| Escenario | Como se conectan los brigadistas |
+|-----------|----------------------------------|
+| Evento con Internet | URL de Vercel via QR — HTTPS directo |
+| Hotspot de laptop | `http://192.168.137.1:8000` via QR local |
+| IP personalizada | Boton "IP Hotspot" en la app movil |
+| Sin señal temporal | Offline queue → auto-sync al reconectar |
 
 ---
 
-## 📂 Estructura del Repositorio
+## Credenciales de acceso
 
-```text
+| Rol | Usuario | Contrasena | Permisos |
+|-----|---------|------------|----------|
+| **Super Usuario (Mando Central)** | `pedro.zavala` | `admin1` | Dashboard completo, reportes Excel, configuracion del evento, QR de acceso, LEGO Builder de widgets |
+| **Brigadista de Campo** | *(Sin login)* | *(Acceso por QR directo)* | Terminal movil de triaje, registro de pacientes, traslados |
+
+---
+
+## Estructura del repositorio
+
+```
 sepam-mando-operativo/
-├── src/                               # Frontend Angular 20+
-│   ├── app/
-│   │   ├── components/
-│   │   │   ├── admin-panel/           # Panel táctico y auditoría
-│   │   │   ├── triage-form/           # Formulario rápido de triaje
-│   │   │   ├── header/                # Barra superior con botón QR y estado
-│   │   │   ├── network-modal/         # Modal de código QR oficial y enlace móvil
-│   │   │   └── statistics/            # Gráficos y distribución de atenciones
-│   │   ├── services/
-│   │   │   ├── database.service.ts    # Comunicación HTTP dinámica (/api)
-│   │   │   ├── network.service.ts     # Generación de URLs y QR de producción
-│   │   │   └── auth.service.ts       # Sesión y roles de usuarios
-│   │   └── app.component.ts           # Componente raíz
-│   └── styles.css                     # Estilos tácticos médicos de alta visibilidad
-├── backend/                           # Backend Python FastAPI
-│   ├── main.py                        # Endpoints REST (/api/atenciones, /api/analitica/...)
-│   ├── database.py                    # Capa DuckDB 1.5 + SQLite WAL
-│   └── requirements.txt               # fastapi, uvicorn, duckdb, pandas, openpyxl
-├── vercel.json                        # Configuración de despliegue y proxy en Vercel
-├── pterodactyl_with_sepam.conf        # Configuración de Nginx blindada para Oracle Cloud
-├── sepam-api.service                  # Definición de servicio Systemd para el backend
-└── README.md                          # Documentación completa del proyecto
+├── src/
+│   └── app/
+│       ├── components/
+│       │   ├── dashboard/            # Dashboard Power BI con widgets SVG y cross-filtering
+│       │   ├── paramedic-mobile/     # Terminal movil brigadista (offline-first, QR, IP manual)
+│       │   ├── medical-acv/          # Vista ACV con semaforos de signos vitales
+│       │   ├── ambulance/            # Formulario MSP-002 autogenerado
+│       │   ├── admin-panel/          # Panel de auditoria y trazabilidad
+│       │   ├── network-modal/        # Modal QR, toggle Hotspot/Nube, copia de URL
+│       │   ├── quick-edit-modal/     # Editor LEGO de widgets del dashboard
+│       │   └── header/               # Barra superior con estado de conexion
+│       ├── services/
+│       │   ├── emergency.service.ts  # Estado global, offline queue, IDs anti-colision
+│       │   ├── database.service.ts   # HTTP dinamico con fallback Hotspot → localhost
+│       │   ├── network.service.ts    # URLs, QR, diagnostico de red
+│       │   ├── customizer.service.ts # Temas y configuracion de widgets
+│       │   └── access-auth.service.ts# RBAC, sesion y roles
+│       └── models/
+│           └── emergency.model.ts    # Interfaces y tipos (Atencion, Triaje, etc.)
+├── backend/
+│   ├── main.py                       # Endpoints REST FastAPI
+│   ├── database.py                   # SQLite WAL + DuckDB
+│   ├── redis_service.py              # Pub/Sub y cache Redis
+│   ├── network_manager.py            # Diagnostico de red y generacion de QR
+│   ├── analytics.py                  # Reportes y exportacion Excel
+│   ├── telegram_service.py           # Alertas criticas via Telegram (opcional)
+│   ├── sepam.db                      # Base de datos SQLite (generada automaticamente)
+│   ├── requirements.txt              # Dependencias Python
+│   └── iniciar_servidor_db.bat       # Script de inicio en Windows
+├── capacitor.config.json             # Configuracion para compilar APK con Capacitor
+├── INICIAR_SISTEMA_SEPAM.bat         # Levanta frontend + backend + reglas de firewall
+├── vercel.json                       # Proxy /api/* → backend y config de deploy
+└── README.md
 ```
 
 ---
 
-## 🚀 Despliegue en Producción
+## Endpoints clave del backend
 
-### 1. Frontend en Vercel
-1. Ingresa a tu panel en [Vercel](https://vercel.com/new).
-2. Importa el repositorio **`PeterPandaDeveloper/sepam-mando-operativo`**.
-3. Vercel detectará el framework **Angular** y el archivo `vercel.json` automáticamente.
-4. Presiona **Deploy**. Tendrás disponible tu URL oficial con HTTPS activado (ej. `https://sepam-mando-operativo.vercel.app`).
-
-### 2. Backend en Oracle Cloud (`150.136.238.32`)
-El backend corre como un servicio persistente gestionado por Systemd:
-
-```bash
-# Ver estado del servicio
-sudo systemctl status sepam-api
-
-# Reiniciar servicio (si se aplican cambios al backend)
-sudo systemctl restart sepam-api
-
-# Ver logs en tiempo real
-sudo journalctl -u sepam-api -f
-```
-
-### 3. Configuración de Nginx Blindada (Convivencia con Pterodactyl)
-Para evitar cualquier colisión con el panel de juegos o el demonio Wings, Nginx redirige el tráfico de SEPAM mediante un prefijo exclusivo `/sepam-api/`:
-
-```nginx
-# En /etc/nginx/sites-available/pterodactyl.conf
-server {
-    listen 80;
-    server_name 150.136.238.32;
-
-    # SEPAM Backend Proxy Aislado
-    location ^~ /sepam-api/ {
-        proxy_pass http://127.0.0.1:8000/api/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # Pterodactyl y Wings (Intactos)
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-    ...
-}
-```
+| Metodo | Endpoint | Descripcion |
+|--------|----------|-------------|
+| `GET` | `/api/estado` | Estado del sistema, evento activo y totales |
+| `GET` | `/api/atenciones` | Listado de pacientes en tiempo real |
+| `POST` | `/api/atenciones` | Registrar nueva atencion de triaje |
+| `PUT` | `/api/atenciones/{id}` | Actualizar atencion existente |
+| `GET` | `/api/analitica/resumen` | Estadisticas DuckDB (por sector, prioridad, tipo) |
+| `GET` | `/api/analitica/exportar-excel` | Genera y descarga reporte oficial `.xlsx` |
+| `GET` | `/api/red/diagnostico` | IP recomendada, QR local y estado del Hotspot |
 
 ---
 
-## 🛠️ Desarrollo Local
+## Despliegue en produccion
 
-### Prerrequisitos
-- Node.js 20+ y npm
-- Python 3.12+
+### Frontend — Vercel (automatico)
 
-### Iniciar Frontend
+Cada `git push` a `main` activa un deploy automatico en Vercel.
+
 ```bash
-npm install
-npm run start
-# Abre http://localhost:4200
+git push origin main
+# Vercel detecta Angular via vercel.json y despliega en ~60s
 ```
 
-### Iniciar Backend
+Para configurar por primera vez:
+1. Ir a [vercel.com/new](https://vercel.com/new)
+2. Importar `PeterPandaDeveloper/sepam-mando-operativo`
+3. Vercel detecta Angular automaticamente → **Deploy**
+
+### Backend — Laptop del mando (evento presencial)
+
 ```bash
+# Windows — doble clic o ejecutar:
+INICIAR_SISTEMA_SEPAM.bat
+
+# Manual:
 cd backend
 python -m venv venv
-# En Windows:
-.\venv\Scripts\activate
-# En Linux/macOS:
-source venv/bin/activate
-
+venv\Scripts\activate       # Windows
 pip install -r requirements.txt
 python main.py
 # API disponible en http://localhost:8000/docs
 ```
 
+### Backend — Oracle Cloud (opcional, produccion remota)
+
+```bash
+# Ver estado del servicio
+sudo systemctl status sepam-api
+
+# Reiniciar tras cambios
+sudo systemctl restart sepam-api
+
+# Logs en tiempo real
+sudo journalctl -u sepam-api -f
+```
+
 ---
 
-## 📊 Endpoints Clave del Backend
+## Desarrollo local
 
-- `GET /api/estado`: Comprueba el estado del sistema, evento activo y totales.
-- `GET /api/atenciones`: Listado de pacientes registrados en tiempo real.
-- `POST /api/atenciones`: Registro de nueva atención de triaje.
-- `GET /api/analitica/resumen`: Estadísticas procesadas con DuckDB (por sector, prioridad, tipo).
-- `GET /api/analitica/exportar-excel`: Genera y descarga el informe oficial en `.xlsx`.
+### Prerrequisitos
+
+- Node.js 20+ y npm
+- Python 3.12+
+- Redis (opcional para alertas en vivo)
+
+### Iniciar todo
+
+```bash
+# Terminal 1 — Frontend
+npm install
+npm run start
+# http://localhost:4200
+
+# Terminal 2 — Backend
+cd backend
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
+# http://localhost:8000/docs
+```
+
+### Build de produccion
+
+```bash
+npm run build
+# Salida en dist/sepam-mando-operativo/
+```
+
+### Compilar APK (Capacitor)
+
+```bash
+npm run build
+npx cap sync android
+npx cap open android
+# Compilar desde Android Studio → Build → Generate Signed APK
+```
 
 ---
 
-## 📄 Licencia y Créditos
-Desarrollado para el equipo de Mando Operativo de Emergencias Prehospitalarias y Cobertura de Eventos Masivos.  
-Autor: **Pedro Zavala M. (PeterPandaDeveloper)**
+## Conectarse a la base de datos (DBeaver)
+
+**SQLite — `backend/sepam.db`**
+
+1. `Ctrl+Shift+N` → seleccionar **SQLite**
+2. Browse → apuntar a `backend/sepam.db`
+3. Test Connection → Finish
+
+Tablas disponibles:
+- `atenciones` — todos los pacientes registrados
+- `logs_auditoria` — trazabilidad de cada accion del sistema
+- `evento` — configuracion del evento activo
+- `personal` — brigadistas registrados
+
+---
+
+## Tecnologias utilizadas
+
+| Capa | Tecnologia |
+|------|------------|
+| Frontend | Angular 17+, TypeScript, Tailwind CSS, Signals API |
+| Backend | Python 3.12, FastAPI, Uvicorn |
+| BD Operacional | SQLite 3 (modo WAL) |
+| BD Analitica | DuckDB 1.5 |
+| Cache / Alertas | Redis 7 (Pub/Sub) |
+| Deploy Frontend | Vercel (Edge Network, HTTPS) |
+| Deploy Backend | Laptop local / Oracle Cloud (Systemd) |
+| APK Movil | Capacitor (Android) |
+| Reportes | openpyxl, pandas |
+| QR Offline | qrcode + Pillow (base64) |
+
+---
+
+## Licencia y creditos
+
+Desarrollado para el equipo de Mando Operativo de Emergencias Prehospitalarias y Cobertura de Eventos Masivos.
+
+Autor: **Pedro Zavala M.** — [PeterPandaDeveloper](https://github.com/PeterPandaDeveloper)
